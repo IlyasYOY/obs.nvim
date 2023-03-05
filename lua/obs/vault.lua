@@ -206,18 +206,13 @@ end
 function Vault:find_backlinks(name)
     local notes = self:list_backlinks(name)
 
-    obs_telescope.find_through_items(
-        "Backlinks",
-        notes,
-        nil,
-        function(entry)
-            return {
-                value = entry:path(),
-                display = entry:name(),
-                ordinal = entry:name(),
-            }
-        end
-    )
+    obs_telescope.find_through_items("Backlinks", notes, nil, function(entry)
+        return {
+            value = entry:path(),
+            display = entry:name(),
+            ordinal = entry:name(),
+        }
+    end)
 end
 
 function Vault:grep_note()

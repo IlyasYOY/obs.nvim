@@ -1,6 +1,5 @@
 local Vault = require "obs.vault"
 local spec = require "coredor.spec"
-local coredor = require "coredor"
 local File = require "coredor.file"
 
 local function vault_fixture()
