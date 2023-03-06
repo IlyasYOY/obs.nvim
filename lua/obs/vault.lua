@@ -142,7 +142,7 @@ function Vault:rename_current_note()
         self:rename(
             old_name,
             vim.fn.input {
-                promt = "New name: ",
+                prompt = "New name: ",
                 default = old_name,
             }
         )
