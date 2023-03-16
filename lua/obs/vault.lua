@@ -239,7 +239,7 @@ end
 ---@return boolean
 function Vault:is_current_buffer_in_vault()
     local file_name = vim.api.nvim_buf_get_name(0)
-    return core.string_has_prefix(file_name, self._home_path:absolute(), true)
+    return core.string_has_prefix(file_name, self._home_path:expand(), true)
 end
 
 ---checks if this buffer in the vault, usefull in autocommands.
