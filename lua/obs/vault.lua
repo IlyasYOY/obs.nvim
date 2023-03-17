@@ -47,7 +47,22 @@ function VaultOpts:new(opts)
         home = vault_opts.journal_home,
     }, journal_opts)
 
+
+    vault_opts.vault_home = expand_path(opts.vault_home)
+    journal_opts.home = expand_path(journal_opts.home)
+    templater_opts.home = expand_path(templater_opts.home)
+
     return vault_opts
+end
+
+---expands path to full
+---@param path string?
+---@return string?
+function expand_path(path)
+    if not path then 
+        return nil
+    end
+    return Path:new(path):expand()
 end
 
 ---@class obs.Vault
