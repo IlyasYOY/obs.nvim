@@ -2,6 +2,9 @@ local File = require "coredor.file"
 
 local M = {}
 
+---lists folders under a given path
+---@param path_string string?
+---@return Array<string>
 function M.list_folders(path_string)
     if path_string == nil then
         error "path must not be nil"

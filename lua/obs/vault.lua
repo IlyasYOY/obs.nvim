@@ -142,10 +142,11 @@ function Vault:find_directory_and_move_current_note()
         end,
         function(entry)
             entry = File:new(entry)
+            local relative_string = entry:as_plenary():make_relative()
             return {
-                value = entry:path(),
-                display = entry:path(),
-                ordinal = entry:path(),
+                value = relative_string,
+                display = relative_string,
+                ordinal = relative_string,
                 source = current_note_fullpath,
                 destination = (entry:as_plenary() / current_note_filename):expand(),
             }
