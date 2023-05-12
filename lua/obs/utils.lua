@@ -18,6 +18,23 @@ function M.list_directories(path_string)
             "path '" .. path_string .. "' must point to directory, not a file"
         )
     end
+
+    local result = {
+        file:path(),
+    }
+
+    -- TODO: Replace with plenary scandir.
+    -- somehow it didn't workout, tests were failing.
+    -- I guess I was missusing the API.
+    local files = file.list(path_string, "**/*")
+
+    for _, found_file in ipairs(files) do
+        if found_file:as_plenary():is_dir() then
+            result[#result + 1] = found_file:path()
+        end
+    end
+
+    return result
 end
 
 return M
