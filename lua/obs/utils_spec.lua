@@ -3,7 +3,7 @@ local coredor = require "coredor"
 
 describe("list directories", function()
     local utils = require "obs.utils"
-    local list_directories = utils.list_directories
+    local list_directories = utils.list_folders
     local temp_file_fixture = spec.temp_file_fixture()
     local temp_dir_fixture = spec.temp_dir_fixture()
 

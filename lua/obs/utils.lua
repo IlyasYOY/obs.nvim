@@ -2,7 +2,7 @@ local File = require "coredor.file"
 
 local M = {}
 
-function M.list_directories(path_string)
+function M.list_folders(path_string)
     if path_string == nil then
         error "path must not be nil"
     end
