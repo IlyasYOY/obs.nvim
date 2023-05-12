@@ -160,6 +160,16 @@ vim.keymap.set("n", "<leader>nrn", function()
 end, { desc = "notes rename current" })
 ```
 
+- *Move note to directory from search.* Function launches telescope to find directory to move current note to.
+
+```lua
+vim.keymap.set("n", "<leader>nM", function()
+    obs.vault:run_if_note(function()
+        obs.vault:find_directory_and_move_current_note()
+    end)
+end, { desc = "move notes to directory" })
+```
+
 - *Setup nvim-cmp completion source.* After that you'll be able to use completion for notes inside your vault.
 
 ```lua

@@ -6,6 +6,7 @@ local Path = require "plenary.path"
 
 local obs_telescope = require "obs.telescope"
 local core = require "coredor"
+local utils = require "obs.utils"
 
 -- table with vault options
 ---@class obs.VaultOpts
@@ -118,6 +119,39 @@ end
 
 function Vault:find_and_insert_template()
     self._templater:search_and_insert_template()
+end
+
+function Vault:find_directory_and_move_current_note()
+    local folders = utils.list_folders(self._home_path:expand())
+
+    local current_note_filename = vim.fn.expand "%:t"
+    local current_note_fullpath = vim.fn.expand "%"
+    local current_buf = vim.api.nvim_get_current_buf()
+
+    return obs_telescope.find_through_items(
+        "Folders",
+        folders,
+        function(selection)
+            local from_file = File:new(selection.source)
+            from_file:as_plenary():copy {
+                destination = selection.destination,
+            }
+            vim.fn.execute(current_buf .. "bdelete")
+            File:new(selection.destination):edit()
+            from_file:as_plenary():rm()
+        end,
+        function(entry)
+            entry = File:new(entry)
+            local relative_string = entry:as_plenary():make_relative()
+            return {
+                value = relative_string,
+                display = relative_string,
+                ordinal = relative_string,
+                source = current_note_fullpath,
+                destination = (entry:as_plenary() / current_note_filename):expand(),
+            }
+        end
+    )
 end
 
 function Vault:find_note()
