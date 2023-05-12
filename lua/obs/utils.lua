@@ -25,7 +25,7 @@ function M.list_directories(path_string)
 
     -- TODO: Replace with plenary scandir.
     -- somehow it didn't workout, tests were failing.
-    -- I guess I was missusing the API.
+    -- I guess I was misusing the API.
     local files = file.list(path_string, "**/*")
 
     for _, found_file in ipairs(files) do
