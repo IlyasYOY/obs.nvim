@@ -1,6 +1,5 @@
 local spec = require "coredor.spec"
 local coredor = require "coredor"
-local File = require "coredor.file"
 
 describe("list directories", function()
     local utils = require "obs.utils"
