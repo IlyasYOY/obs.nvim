@@ -187,13 +187,16 @@ end
 function Vault:rename_current_note()
     self:run_if_note(function()
         local old_name = vim.fn.expand "%:t:r"
-        self:rename(
+        local result = self:rename(
             old_name,
             vim.fn.input {
                 prompt = "New name: ",
                 default = old_name,
             }
         )
+        if result then 
+            result:edit()
+        end
     end)
 end
 
