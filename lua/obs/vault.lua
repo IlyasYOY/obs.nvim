@@ -194,7 +194,7 @@ function Vault:rename_current_note()
                 default = old_name,
             }
         )
-        if result then 
+        if result then
             result:edit()
         end
     end)
