@@ -33,12 +33,27 @@ return {
             "nvim-lua/plenary.nvim",
             "nvim-telescope/telescope.nvim",
         },
+        dev = true,
         config = function()
             local obs = require "obs"
+
             obs.setup {
-                -- Settings for your vault...
+                vault_home = "~/Notes",
+                journal = {
+                    template_name = "daily",
+                },
             }
-            -- Your setup logic goes here...
+
+            vim.keymap.set("n", "<leader>nn", "<cmd>ObsNvimFollowLink<cr>")
+            vim.keymap.set("n", "<leader>nN", "<cmd>ObsNvimNewNote<cr>")
+            vim.keymap.set("n", "<leader>nd", "<cmd>ObsNvimDailyNote<cr>")
+            vim.keymap.set("n", "<leader>nrn", "<cmd>ObsNvimRename<cr>")
+            vim.keymap.set("n", "<leader>nT", "<cmd>ObsNvimTemplate<cr>")
+            vim.keymap.set("n", "<leader>nM", "<cmd>ObsNvimMove<cr>")
+            vim.keymap.set("n", "<leader>nb", "<cmd>ObsNvimBacklinks<cr>")
+            vim.keymap.set("n", "<leader>nfj", "<cmd>ObsNvimFindInJournal<cr>")
+            vim.keymap.set("n", "<leader>nff", "<cmd>ObsNvimFindNote<cr>")
+            vim.keymap.set("n", "<leader>nfg", "<cmd>ObsNvimFindInNotes<cr>")
         end,
     },
 }
@@ -73,103 +88,16 @@ I won't go over all configuration options in details. There are the most importa
 
 Example mappings configuration may be found [here](https://github.com/IlyasYOY/dotfiles/blob/master/config/nvim/lua/plugins/obs.lua).  
 
-- *Insert template using telescope.* Function opens dialog with `<CR>` mapped to insert template in the line below. 
-
-```lua
-vim.keymap.set("n", "<leader>nT", function()
-    obs.vault:run_if_note(function()
-        obs.vault:find_and_insert_template()
-    end)
-end, { desc = "Inserts notes Template" })
-```
-
-- *Follow link under cursor.*
-
-```lua
-vim.keymap.set("n", "<leader>nn", function()
-    obs.vault:run_if_note(function()
-        obs.vault:follow_link()
-    end)
-end, { desc = "navigate to note" })
-```
-
-- *Creates a new note.* This function prefixes note with `YYYY-MM-dd`. In case of empty name plugin generates name from time-stamp. Example: `2023-03-12 1678625141.md`.
-
-```lua
-vim.keymap.set("n", "<leader>nN", function()
-    local input = vim.fn.input {
-        prompt = "New note name: ",
-        default = "",
-    }
-    local file = obs.vault:create_note(input)
-    if file then
-        file:edit()
-    else
-        vim.notify("Note '" .. input .. "' already exists")
-    end
-end, { desc = "create new Note" })
-```
-
-- *Opens daily note.* Creates one if doesn't exist. 
-
-```lua
-vim.keymap.set("n", "<leader>nd", function()
-    obs.vault:open_daily()
-end, { desc = "notes daily" })
-```
-
-- *Telescope find notes.*
-
-```lua
-vim.keymap.set("n", "<leader>nff", function()
-    obs.vault:find_note()
-end, { desc = "notes files find" })
-```
-
-- *Telescope find journal notes.*
-
-```lua
-vim.keymap.set("n", "<leader>nfj", function()
-    obs.vault:find_journal()
-end, { desc = "notes find journal" })
-```
-
-- *Telescope live-grep through notes.*
-
-```lua
-vim.keymap.set("n", "<leader>nfg", function()
-    obs.vault:grep_note()
-end, { desc = "notes files grep" })
-```
-
-- *Telescope through back-links.*
-
-```lua
-vim.keymap.set("n", "<leader>nfb", function()
-    obs.vault:run_if_note(function()
-        obs.vault:find_current_note_backlinks()
-    end)
-end, { desc = "notes find back-links" })
-```
-
-- *Renames current note.* This function updates links to the note. I advice you to rename notes inside **Obsidian** for important notes with lots of back-links.
-
-```lua
-vim.keymap.set("n", "<leader>nrn", function()
-    obs.vault:rename_current_note()
-end, { desc = "notes rename current" })
-```
-
-- *Move note to directory from search.* Function launches telescope to find directory to move current note to.
-
-```lua
-vim.keymap.set("n", "<leader>nM", function()
-    obs.vault:run_if_note(function()
-        obs.vault:find_directory_and_move_current_note()
-    end)
-end, { desc = "move notes to directory" })
-```
-
+- *Insert template using telescope.* `:ObsNvimTemplate` opens dialog with `<CR>` mapped to insert template in the line below. 
+- *Follow link under cursor.* `:ObsNvimFollowLink`
+- *Creates a new note.* `:ObsNvimNewNote` prefixes note with `YYYY-MM-dd`. In case of empty name plugin generates name from time-stamp. Example: `2023-03-12 1678625141.md`.
+- *Opens daily note.* `:ObsNvimDailyNote` creates one if doesn't exist. 
+- *Telescope find notes.* `:ObsNvimFindNote`
+- *Telescope find journal notes.* `:ObsNvimFindInJournal`
+- *Telescope live-grep through notes.* `:ObsNvimFinInNotes`
+- *Telescope through back-links.* `:ObsNvimBacklinks`
+- *Renames current note.* `:ObsNvimRename`  updates links to the note. I advice you to rename notes inside **Obsidian** for important notes with lots of back-links. 
+- *Move note to directory from search.* `:ObsNvimMove` launches telescope to find directory to move current note to.
 - *Setup nvim-cmp completion source.* After that you'll be able to use completion for notes inside your vault.
 
 ```lua
@@ -202,4 +130,4 @@ vim.api.nvim_create_autocmd({ "BufEnter" }, {
 
 ## Tips 
 
-- [Here](https://github.com/IlyasYOY/dotfiles/blob/master/config/nvim/snippets/markdown.lua) you van find useful **LuaSnip** snippets for **Obsidian**.
+- [Here](https://github.com/IlyasYOY/dotfiles/blob/master/config/nvim/snippets/markdown.lua) you can find useful **LuaSnip** snippets for **Obsidian**.
