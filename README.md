@@ -90,14 +90,15 @@ I won't go over all configuration options in details. There are the most importa
 Example mappings configuration may be found [here](https://github.com/IlyasYOY/dotfiles/blob/master/config/nvim/lua/plugins/obs.lua).  
 
 - *Insert template using telescope.* `:ObsNvimTemplate` opens dialog with `<CR>` mapped to insert template in the line below. 
-- *Follow link under cursor.* `:ObsNvimFollowLink`
+- *Follow link under cursor.* `:ObsNvimFollowLink`.
+- *Open random note.* `:ObsNvimRandomNote`.
 - *Creates a new note.* `:ObsNvimNewNote` prefixes note with `YYYY-MM-dd`. In case of empty name plugin generates name from time-stamp. Example: `2023-03-12 1678625141.md`.
 - *Opens daily note.* `:ObsNvimDailyNote` creates one if doesn't exist. 
-- *Telescope find notes.* `:ObsNvimFindNote`
-- *Telescope find journal notes.* `:ObsNvimFindInJournal`
-- *Telescope live-grep through notes.* `:ObsNvimFinInNotes`
-- *Telescope through back-links.* `:ObsNvimBacklinks`
-- *Renames current note.* `:ObsNvimRename`  updates links to the note. I advice you to rename notes inside **Obsidian** for important notes with lots of back-links. 
+- *Telescope find notes.* `:ObsNvimFindNote`.
+- *Telescope find journal notes.* `:ObsNvimFindInJournal`.
+- *Telescope live-grep through notes.* `:ObsNvimFinInNotes`.
+- *Telescope through back-links.* `:ObsNvimBacklinks`.
+- *Renames current note.* `:ObsNvimRename` updates links to the note. I advice you to rename notes inside **Obsidian** for important notes with lots of back-links. 
 - *Move note to directory from search.* `:ObsNvimMove` launches telescope to find directory to move current note to.
 - *Setup nvim-cmp completion source.* After that you'll be able to use completion for notes inside your vault.
 
