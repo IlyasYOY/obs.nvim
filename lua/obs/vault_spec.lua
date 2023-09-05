@@ -300,3 +300,31 @@ describe("rename", function()
         )
     end)
 end)
+
+describe("copy obsidian link", function()
+    local state = vault_fixture()
+    it("no parameter", function()
+        local result = state.vault:copy_obsidian_link()
+
+        assert.is_nil(result, "result should be nil")
+    end)
+
+    it("file not found", function()
+        local result = state.vault:copy_obsidian_link "test"
+
+        assert.is_nil(result, "result should be nil")
+    end)
+
+    it("file found", function()
+        state.create_file "test.md"
+
+        -- obsidian://open?vault=vimwiki&file=diary%2F2023-09-06
+        local result = state.vault:copy_obsidian_link "test"
+
+        assert.is.equal(
+            "obsidian://open?vault=test&file=test",
+            result,
+            "result should be nil"
+        )
+    end)
+end)

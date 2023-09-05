@@ -212,6 +212,16 @@ function Vault:open_random_note()
     random_note:edit()
 end
 
+---renames the note
+---@param name string
+---@return string?
+function Vault:copy_obsidian_link(name)
+    local note = self:get_note(name)
+    if not note then
+        return nil
+    end
+end
+
 ---this function is meant to be used from rename API. It goes throgh links in vault and upates them.
 ---@param old_note_name string
 ---@param new_note_name string
