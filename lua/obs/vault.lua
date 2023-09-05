@@ -204,6 +204,14 @@ local function escape_magic(s)
     return (s:gsub("[%^%$%(%)%%%.%[%]%*%+%-%?]", "%%%1"))
 end
 
+---opens random note from the vault.
+function Vault:open_random_note()
+    local notes = self:list_notes()
+    local random_note_index = math.random(#notes)
+    local random_note = notes[random_note_index]
+    random_note:edit()
+end
+
 ---this function is meant to be used from rename API. It goes throgh links in vault and upates them.
 ---@param old_note_name string
 ---@param new_note_name string

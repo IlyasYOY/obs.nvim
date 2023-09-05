@@ -16,6 +16,12 @@ end, {
     desc = "Inserts notes Template",
 })
 
+vim.api.nvim_create_user_command("ObsNvimRandomNote", function()
+    obs.vault:open_random_note()
+end, {
+    desc = "Navigate to random note",
+})
+
 vim.api.nvim_create_user_command("ObsNvimFollowLink", function()
     obs.vault:run_if_note(function()
         obs.vault:follow_link()
