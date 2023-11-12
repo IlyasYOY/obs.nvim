@@ -160,7 +160,12 @@ end
 
 function Vault:find_todos()
     local request_string = "- \\[[x ]\\]"
-    obs_telescope.grep_files("Find TODOs", self._home_path:expand(), nil, request_string)
+    obs_telescope.grep_files(
+        "Find TODOs",
+        self._home_path:expand(),
+        nil,
+        request_string
+    )
 end
 
 function Vault:find_current_note_backlinks()
