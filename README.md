@@ -55,6 +55,11 @@ return {
             vim.keymap.set("n", "<leader>nfj", "<cmd>ObsNvimFindInJournal<cr>")
             vim.keymap.set("n", "<leader>nff", "<cmd>ObsNvimFindNote<cr>")
             vim.keymap.set("n", "<leader>nfg", "<cmd>ObsNvimFindInNotes<cr>")
+            vim.keymap.set(
+                "n",
+                "<leader>nft",
+                "<cmd>ObsNvimFindTodosInNotes<cr>"
+            )
         end,
     },
 }
@@ -96,7 +101,8 @@ Example mappings configuration may be found [here](https://github.com/IlyasYOY/d
 - *Opens daily note.* `:ObsNvimDailyNote` creates one if doesn't exist. 
 - *Telescope find notes.* `:ObsNvimFindNote`.
 - *Telescope find journal notes.* `:ObsNvimFindInJournal`.
-- *Telescope live-grep through notes.* `:ObsNvimFinInNotes`.
+- *Telescope live-grep through notes.* `:ObsNvimFindInNotes`.
+- *Telescope live-grep through tasks prepared search.* `:ObsNvimFindTodosInNotes`.
 - *Telescope through back-links.* `:ObsNvimBacklinks`.
 - *Renames current note.* `:ObsNvimRename` updates links to the note. I advice you to rename notes inside **Obsidian** for important notes with lots of back-links. 
 - *Move note to directory from search.* `:ObsNvimMove` launches telescope to find directory to move current note to.
