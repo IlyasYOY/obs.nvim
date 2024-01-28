@@ -48,6 +48,7 @@ return {
             vim.keymap.set("n", "<leader>nr", "<cmd>ObsNvimRandomNote<cr>")
             vim.keymap.set("n", "<leader>nN", "<cmd>ObsNvimNewNote<cr>")
             vim.keymap.set("n", "<leader>nd", "<cmd>ObsNvimDailyNote<cr>")
+            vim.keymap.set("n", "<leader>nw", "<cmd>ObsNvimWeeklyNote<cr>")
             vim.keymap.set("n", "<leader>nrn", "<cmd>ObsNvimRename<cr>")
             vim.keymap.set("n", "<leader>nT", "<cmd>ObsNvimTemplate<cr>")
             vim.keymap.set("n", "<leader>nM", "<cmd>ObsNvimMove<cr>")
@@ -94,6 +95,7 @@ Example mappings configuration may be found [here](https://github.com/IlyasYOY/d
 - *Open random note.* `:ObsNvimRandomNote`.
 - *Creates a new note.* `:ObsNvimNewNote` prefixes note with `YYYY-MM-dd`. In case of empty name plugin generates name from time-stamp. Example: `2023-03-12 1678625141.md`.
 - *Opens daily note.* `:ObsNvimDailyNote` creates one if doesn't exist. 
+- *Opens weekly note.* `:ObsNvimWeeklyNote` creates one if doesn't exist. 
 - *Telescope find notes.* `:ObsNvimFindNote`.
 - *Telescope find journal notes.* `:ObsNvimFindInJournal`.
 - *Telescope live-grep through notes.* `:ObsNvimFinInNotes`.

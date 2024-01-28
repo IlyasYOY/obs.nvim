@@ -346,6 +346,11 @@ function Vault:open_daily()
     self._journal:open_daily()
 end
 
+--- Opens weekly note to be edited
+function Vault:open_weekly()
+    self._journal:open_weekly()
+end
+
 ---lists notes from vault
 ---@return coredor.File[]
 function Vault:list_notes()

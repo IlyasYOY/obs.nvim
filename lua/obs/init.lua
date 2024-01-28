@@ -51,6 +51,12 @@ end, {
     desc = "Opens daily note",
 })
 
+vim.api.nvim_create_user_command("ObsNvimWeeklyNote", function()
+    obs.vault:open_weekly()
+end, {
+    desc = "Opens weekly note",
+})
+
 vim.api.nvim_create_user_command("ObsNvimFindNote", function()
     obs.vault:find_note()
 end, {
