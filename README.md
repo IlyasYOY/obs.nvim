@@ -97,7 +97,7 @@ Example mappings configuration may be found [here](https://github.com/IlyasYOY/d
 - *Follow link under cursor.* `:ObsNvimFollowLink`.
 - *Open random note.* `:ObsNvimRandomNote`.
 - *Copy obsidian link to a current note.* `:ObsNvimCopyObsidianLinkToNote`.
-- *Copy obsidian link to a current note.* `:ObsNvimOpenInObsidian`. If you don't have `Browse` command then you can create it manually like [so](https://github.com/IlyasYOY/dotfiles/blob/04f4a5772937792e63f1b38b51730109cc0c35ca/config/nvim/lua/ilyasyoy/init.lua#L13-L32).
+- *Open obsidian link to a current note.* `:ObsNvimOpenInObsidian`. If you don't have `Browse` command then you can create it manually like [so](https://github.com/IlyasYOY/dotfiles/blob/04f4a5772937792e63f1b38b51730109cc0c35ca/config/nvim/lua/ilyasyoy/init.lua#L13-L32).
 - *Creates a new note.* `:ObsNvimNewNote` prefixes note with `YYYY-MM-dd`. In case of empty name plugin generates name from time-stamp. Example: `2023-03-12 1678625141.md`.
 - *Opens daily note.* `:ObsNvimDailyNote` creates one if doesn't exist. 
 - *Opens weekly note.* `:ObsNvimWeeklyNote` creates one if doesn't exist. 
