@@ -39,6 +39,7 @@ return {
 
             obs.setup {
                 vault_home = "~/Notes",
+                vault_name = "Notes",
                 journal = {
                     template_name = "daily",
                 },
@@ -47,6 +48,8 @@ return {
             vim.keymap.set("n", "<leader>nn", "<cmd>ObsNvimFollowLink<cr>")
             vim.keymap.set("n", "<leader>nr", "<cmd>ObsNvimRandomNote<cr>")
             vim.keymap.set("n", "<leader>nN", "<cmd>ObsNvimNewNote<cr>")
+            vim.keymap.set("n", "<leader>ny", "<cmd>ObsNvimCopyObsidianLinkToNote<cr>")
+            vim.keymap.set("n", "<leader>no", "<cmd>ObsNvimOpenInObsidian<cr>")
             vim.keymap.set("n", "<leader>nd", "<cmd>ObsNvimDailyNote<cr>")
             vim.keymap.set("n", "<leader>nw", "<cmd>ObsNvimWeeklyNote<cr>")
             vim.keymap.set("n", "<leader>nrn", "<cmd>ObsNvimRename<cr>")
@@ -93,6 +96,7 @@ Example mappings configuration may be found [here](https://github.com/IlyasYOY/d
 - *Insert template using telescope.* `:ObsNvimTemplate` opens dialog with `<CR>` mapped to insert template in the line below. 
 - *Follow link under cursor.* `:ObsNvimFollowLink`.
 - *Open random note.* `:ObsNvimRandomNote`.
+- *Copy obsidian link to a current note.* `:ObsNvimCopyObsidianLinkToNote`.
 - *Creates a new note.* `:ObsNvimNewNote` prefixes note with `YYYY-MM-dd`. In case of empty name plugin generates name from time-stamp. Example: `2023-03-12 1678625141.md`.
 - *Opens daily note.* `:ObsNvimDailyNote` creates one if doesn't exist. 
 - *Opens weekly note.* `:ObsNvimWeeklyNote` creates one if doesn't exist. 

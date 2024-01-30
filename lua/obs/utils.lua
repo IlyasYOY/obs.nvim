@@ -40,4 +40,39 @@ function M.list_folders(path_string)
     return result
 end
 
+-- check it out at: https://gist.github.com/liukun/f9ce7d6d14fa45fe9b924a3eed5c3d99
+-- this is a bit different version of the gist
+
+local function hex_to_char(x)
+    return string.char(tonumber(x, 16))
+end
+
+local function char_to_hex(c)
+    return string.format("%%%02X", string.byte(c))
+end
+
+---performs urlencoding of a given string
+---@param url string?
+---@return string?
+function M.urlencode(url)
+    if url == nil then
+        return
+    end
+    url = url:gsub("\n", "\r\n")
+    url = url:gsub("([^%w])", char_to_hex)
+    return url
+end
+
+---performs url decoding of a given string
+---@param url string?
+---@return string?
+function M.urldecode(url)
+    if url == nil then
+        return
+    end
+    url = url:gsub("+", " ")
+    url = url:gsub("%%(%x%x)", hex_to_char)
+    return url
+end
+
 return M

@@ -11,6 +11,7 @@ local utils = require "obs.utils"
 -- table with vault options
 ---@class obs.VaultOpts
 ---@field public vault_home string?
+---@field public vault_name string?
 ---@field public templater obs.TemplaterOpts?
 ---@field public journal obs.JournalOpts?
 ---@field public time_provider fun():number
@@ -37,6 +38,7 @@ function VaultOpts:new(opts)
 
     vault_opts.vault_home = opts.vault_home
         or (Path:new(Path.path.home) / "vimwiki"):expand()
+    vault_opts.vault_name = opts.vault_name or "vimwiki"
 
     vault_opts.templates_home = (
         Path:new(vault_opts.vault_home)
@@ -66,6 +68,7 @@ function VaultOpts:new(opts)
 end
 
 ---@class obs.Vault
+---@field protected _name string
 ---@field protected _templates_path Path
 ---@field protected _home_path Path
 ---@field protected _templater obs.Templater
@@ -84,7 +87,9 @@ function Vault:new(opts)
 
     opts = VaultOpts:new(opts)
 
+    vault._name = opts.vault_name
     ---@type Path
+    vault._home_path = Path:new(opts.vault_home)
     vault._home_path = Path:new(opts.vault_home)
     ---@type obs.Templater
     local templater = Templater:new(opts.templater)
@@ -181,6 +186,41 @@ function Vault:rename(name, new_name)
     self:_update_links_in_notes(name, new_name)
 
     return self:get_note(new_name)
+end
+
+---Returns a link to a current note
+---@return string?
+function Vault:get_obsidian_link_to_current_note()
+    return self:run_if_note(function()
+        local current_note = File:new(core.current_working_file())
+        local file_name =
+            current_note:as_plenary():make_relative(self._home_path:expand())
+
+        return "obsidian://open?vault="
+            .. utils.urlencode(self._name)
+            .. "&file="
+            .. utils.urlencode(file_name)
+    end)
+end
+
+---Copies a link to a current note
+---@return string
+function Vault:copy_obsidian_link_to_current_note()
+    local link = self:get_obsidian_link_to_current_note()
+    if link then
+        vim.notify("link was saved to clipboard: " .. link)
+        core.save_to_exchange_buffer(link)
+    end
+end
+
+---Opens current note in Obsidian
+---@return string
+function Vault:open_obsidian_link_to_current_note()
+    local link = self:get_obsidian_link_to_current_note()
+    if link then
+        vim.notify("opening a link: " .. link)
+        vim.cmd.Browse(link)
+    end
 end
 
 ---Renames current working note (if it's note)
@@ -311,7 +351,7 @@ end
 ---@param callback fun()
 function Vault:run_if_note(callback)
     if self:is_current_buffer_a_note() then
-        callback()
+        return callback()
     else
         vim.notify "Current buffer is not a note"
     end

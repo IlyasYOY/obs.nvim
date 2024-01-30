@@ -22,6 +22,18 @@ end, {
     desc = "Navigate to random note",
 })
 
+vim.api.nvim_create_user_command("ObsNvimCopyObsidianLinkToNote", function()
+    obs.vault:copy_obsidian_link_to_current_note()
+end, {
+    desc = "Copies obsidian link to note",
+})
+
+vim.api.nvim_create_user_command("ObsNvimOpenInObsidian", function()
+    obs.vault:open_obsidian_link_to_current_note()
+end, {
+    desc = "Opens note in Obsidian",
+})
+
 vim.api.nvim_create_user_command("ObsNvimFollowLink", function()
     obs.vault:run_if_note(function()
         obs.vault:follow_link()

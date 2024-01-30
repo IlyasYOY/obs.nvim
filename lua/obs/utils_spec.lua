@@ -106,4 +106,29 @@ describe("list directories", function()
         assert.are.equal(temp_dir_path:expand(), result[1])
         assert.are.equal(nested_dir1:expand(), result[2])
     end)
+
+    local urlencode = utils.urlencode
+    local urldecode = utils.urldecode
+    it("url encode", function()
+        local result = urlencode "привет мир"
+
+        assert.are.equal(
+            "%D0%BF%D1%80%D0%B8%D0%B2%D0%B5%D1%82%20%D0%BC%D0%B8%D1%80",
+            result
+        )
+    end)
+
+    it("url decode", function()
+        local result =
+            urldecode "%D0%BF%D1%80%D0%B8%D0%B2%D0%B5%D1%82%20%D0%BC%D0%B8%D1%80"
+
+        assert.are.equal("привет мир", result)
+    end)
+
+    it("url decode/encode", function()
+        local str = "%D0%BF%D1%80%D0%B8%D0%B2%D0%B5%D1%82%20%D0%BC%D0%B8%D1%80"
+        local decoded = urldecode(str)
+        local encoded = urlencode(decoded)
+        assert.are.equal(str, encoded)
+    end)
 end)
