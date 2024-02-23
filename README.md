@@ -66,7 +66,7 @@ return {
 
 ## Configuration
 
-My configuration you can find [here](https://github.com/IlyasYOY/dotfiles/blob/master/config/nvim/lua/plugins/obs.lua). 
+My configuration you can find [here](https://github.com/IlyasYOY/dotfiles/blob/master/config/nvim/lua/plugins/obs-nvim.lua).
 
 ### setup 
 
@@ -91,7 +91,7 @@ I won't go over all configuration options in details. There are the most importa
 
 ### mappings 
 
-Example mappings configuration may be found [here](https://github.com/IlyasYOY/dotfiles/blob/master/config/nvim/lua/plugins/obs.lua).  
+Example mappings configuration may be found [here](https://github.com/IlyasYOY/dotfiles/blob/master/config/nvim/lua/plugins/obs-nvim.lua).
 
 - *Insert template using telescope.* `:ObsNvimTemplate` opens dialog with `<CR>` mapped to insert template in the line below. 
 - *Follow link under cursor.* `:ObsNvimFollowLink`.
