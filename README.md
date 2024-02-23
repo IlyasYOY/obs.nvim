@@ -75,8 +75,8 @@ Example `setup`:
 ```lua 
 obs.setup {
     journal = {
-        -- setting for daily template note name
-        template_name = "daily",
+        -- setting for daily note template name
+        daily_template_name = "daily",
     },
 }
 ```
