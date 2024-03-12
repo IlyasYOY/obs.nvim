@@ -43,13 +43,15 @@ end
 ---@param title string
 ---@param path string to search files at
 ---@param type_filter string? file type, check rg docs typelist on the matter
-function M.grep_files(title, path, type_filter)
+---@param default_text string? default query to run search with
+function M.grep_files(title, path, type_filter, default_text)
     if type_filter == nil then
         type_filter = "md"
     end
 
     return builtin.live_grep {
         cwd = path,
+        default_text = default_text,
         prompt_title = title,
         type_filter = type_filter,
     }

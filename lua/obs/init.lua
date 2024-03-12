@@ -87,6 +87,12 @@ end, {
     desc = "Find in notes",
 })
 
+vim.api.nvim_create_user_command("ObsNvimFindTodosInNotes", function()
+    obs.vault:find_todos()
+end, {
+    desc = "Find todos in notes",
+})
+
 vim.api.nvim_create_user_command("ObsNvimBacklinks", function()
     obs.vault:run_if_note(function()
         obs.vault:find_current_note_backlinks()
