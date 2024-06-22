@@ -75,7 +75,11 @@ describe("new note", function()
         local file = state.vault:create_note(nil)
 
         assert(file)
-        assert.file(file, common_name, vim.fn.resolve(common_filepath():expand()))
+        assert.file(
+            file,
+            common_name,
+            vim.fn.resolve(common_filepath():expand())
+        )
     end)
 
     it("for '' name", function()
@@ -84,7 +88,11 @@ describe("new note", function()
         local file = state.vault:create_note ""
 
         assert(file)
-        assert.file(file, common_name, vim.fn.resolve(common_filepath():expand()))
+        assert.file(
+            file,
+            common_name,
+            vim.fn.resolve(common_filepath():expand())
+        )
     end)
 end)
 
@@ -233,7 +241,11 @@ describe("rename", function()
         local renamed = state.vault:rename("test", "new test")
 
         assert(renamed, "file should be found")
-        assert.file(renamed, "new test", vim.fn.resolve((state.home / "new test.md"):expand()))
+        assert.file(
+            renamed,
+            "new test",
+            vim.fn.resolve((state.home / "new test.md"):expand())
+        )
     end)
 
     it("simple link renamed", function()
