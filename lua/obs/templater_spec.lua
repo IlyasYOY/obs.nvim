@@ -56,7 +56,7 @@ describe("proccess files", function()
         local templates = templater:list_templates()
 
         assert.list_size(templates, 1)
-        assert.file(templates[1], "kitty", kitty_file:expand())
+        assert.file(templates[1], "kitty", vim.fn.resolve(kitty_file:expand()))
     end)
 end)
 

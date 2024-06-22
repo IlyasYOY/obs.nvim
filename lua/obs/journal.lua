@@ -35,7 +35,7 @@ function Journal:new(templater, opts)
     local journal = setmetatable({}, self)
 
     journal._templater = templater
-    journal._home_path = Path:new(opts.home)
+    journal._home_path = Path:new(vim.fn.resolve(opts.home))
     journal._daily_template_name = opts.daily_template_name
         or opts.template_name
     journal._weekly_template_name = opts.weekly_template_name

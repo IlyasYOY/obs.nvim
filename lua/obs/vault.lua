@@ -89,8 +89,7 @@ function Vault:new(opts)
 
     vault._name = opts.vault_name
     ---@type Path
-    vault._home_path = Path:new(opts.vault_home)
-    vault._home_path = Path:new(opts.vault_home)
+    vault._home_path = Path:new(vim.fn.resolve(opts.vault_home))
     ---@type obs.Templater
     local templater = Templater:new(opts.templater)
 
@@ -338,7 +337,8 @@ end
 ---@return boolean
 function Vault:is_current_buffer_in_vault()
     local file_name = vim.api.nvim_buf_get_name(0)
-    return core.string_has_prefix(file_name, self._home_path:expand(), true)
+    local home_path = self._home_path:absolute()
+    return core.string_has_prefix(file_name, home_path, true)
 end
 
 ---checks if this buffer in the vault, usefull in autocommands.

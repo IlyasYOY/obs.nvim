@@ -54,7 +54,7 @@ function Templater:new(opts)
     templater._var_providers = {}
 
     ---@type Path
-    templater._home_path = Path:new(opts.home)
+    templater._home_path = Path:new(vim.fn.resolve(opts.home))
 
     if opts.include_default_providers then
         templater:add_var_provider("date", function()

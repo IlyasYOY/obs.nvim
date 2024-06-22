@@ -56,7 +56,7 @@ describe("new note", function()
         assert.file(
             file,
             expected_name,
-            (state.home / expected_filename):expand()
+            vim.fn.resolve((state.home / expected_filename):expand())
         )
     end)
 
@@ -75,7 +75,7 @@ describe("new note", function()
         local file = state.vault:create_note(nil)
 
         assert(file)
-        assert.file(file, common_name, common_filepath():expand())
+        assert.file(file, common_name, vim.fn.resolve(common_filepath():expand()))
     end)
 
     it("for '' name", function()
@@ -84,7 +84,7 @@ describe("new note", function()
         local file = state.vault:create_note ""
 
         assert(file)
-        assert.file(file, common_name, common_filepath():expand())
+        assert.file(file, common_name, vim.fn.resolve(common_filepath():expand()))
     end)
 end)
 
@@ -121,7 +121,7 @@ describe("find backlinks", function()
         local backlinks = state.vault:list_backlinks "note"
 
         assert.list_size(backlinks, 1)
-        assert.file(backlinks[1], "note1", note1:expand())
+        assert.file(backlinks[1], "note1", vim.fn.resolve(note1:expand()))
     end)
 
     it("multiple backlink", function()
@@ -178,7 +178,7 @@ describe("list", function()
 
         local note = notes[#notes]
 
-        assert.file(note, "note1", file:expand())
+        assert.file(note, "note1", vim.fn.resolve(file:expand()))
     end)
 
     it("md items", function()
@@ -233,7 +233,7 @@ describe("rename", function()
         local renamed = state.vault:rename("test", "new test")
 
         assert(renamed, "file should be found")
-        assert.file(renamed, "new test", (state.home / "new test.md"):expand())
+        assert.file(renamed, "new test", vim.fn.resolve((state.home / "new test.md"):expand()))
     end)
 
     it("simple link renamed", function()
