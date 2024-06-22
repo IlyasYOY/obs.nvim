@@ -20,11 +20,11 @@ jobs:
             manager: sudo apt-get
             packages: -y ripgrep
           - os: macos-13
-            rev: nightly/nvim-macos.tar.gz
+            rev: nightly/nvim-macos-x86_64.tar.gz
             manager: brew
             packages: ripgrep
           - os: macos-14
-            rev: nightly/nvim-macos.tar.gz
+            rev: nightly/nvim-macos-x86_64.tar.gz
             manager: brew
             packages: ripgrep
     steps:
