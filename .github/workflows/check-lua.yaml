@@ -6,7 +6,7 @@ on: [push]
 jobs:
   luacheck:
     name: Luacheck
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v2
       - name: Prepare
@@ -15,14 +15,17 @@ jobs:
           sudo apt-get install -y luarocks
           sudo luarocks install luacheck
       - name: Lint
-        run: luacheck lua
+        run: make lint_luacheck
 
   stylua:
     name: stylua
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v2
-      - uses: JohnnyMorganz/stylua-action@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --color always --check lua
+      - name: Prepare
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rustc
+          sudo cargo install stylua
+      - name: Lint
+        run: make lint_stylua
