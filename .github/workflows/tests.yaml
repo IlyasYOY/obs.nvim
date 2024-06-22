@@ -19,12 +19,27 @@ jobs:
             rev: nightly/nvim-linux64.tar.gz
             manager: sudo apt-get
             packages: -y ripgrep
+          - os: ubuntu-22.04
+            rev: stable/nvim-linux64.tar.gz
+            manager: sudo apt-get
+            packages: -y ripgrep
+          - os: ubuntu-24.04
+            rev: stable/nvim-linux64.tar.gz
+            manager: sudo apt-get
           - os: macos-13
             rev: nightly/nvim-macos-x86_64.tar.gz
             manager: brew
             packages: ripgrep
           - os: macos-14
             rev: nightly/nvim-macos-x86_64.tar.gz
+            manager: brew
+            packages: ripgrep
+          - os: macos-13
+            rev: stable/nvim-macos-x86_64.tar.gz
+            manager: brew
+            packages: ripgrep
+          - os: macos-14
+            rev: stable/nvim-macos-x86_64.tar.gz
             manager: brew
             packages: ripgrep
     steps:
