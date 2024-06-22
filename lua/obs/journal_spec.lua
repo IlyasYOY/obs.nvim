@@ -1,5 +1,5 @@
 local Path = require "plenary.path"
-local Journal =    require "obs.journal"
+local Journal = require "obs.journal"
 local Templater = require "obs.templater"
 
 local spec_utils = require "coredor.spec"
