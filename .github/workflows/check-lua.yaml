@@ -25,7 +25,8 @@ jobs:
       - name: Prepare
         run: |
           sudo apt-get update
-          sudo apt-get install -y rustc
-          sudo cargo install stylua
+          sudo apt install -y nodejs npm
       - name: Lint
-        run: make lint_stylua
+        run: "make lint_stylua"
+        env:
+          STYLUA: "npx @johnnymorganz/stylua-bin"

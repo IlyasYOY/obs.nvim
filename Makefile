@@ -1,12 +1,14 @@
 all: format lint test
 
+STYLUA ?= stylua
+
 .PHONY: test 
 test:
 	nvim --headless -u scripts/minimal_init.lua -c "PlenaryBustedDirectory lua { minimal_init='./scripts/minimal_init.lua', sequential=true, }"
 
 .PHONY: lint_stylua
 lint_stylua:
-	stylua --color always --check lua
+	${STYLUA} --color always --check lua
 
 .PHONY: lint_luacheck
 lint_luacheck:
@@ -17,5 +19,5 @@ lint: lint_luacheck lint_stylua
 
 .PHONY: format 
 format:
-	stylua lua
+	${STYLUA} lua
 
