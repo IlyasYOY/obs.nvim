@@ -1,5 +1,5 @@
 local Templater = require "obs.templater"
-local spec_utils = require "coredor.spec"
+local spec_utils = require "obs.utils.spec"
 
 describe("proccess files", function()
     local templater

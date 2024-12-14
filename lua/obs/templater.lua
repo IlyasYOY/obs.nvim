@@ -1,6 +1,6 @@
 local Path = require "plenary.path"
-local core = require "coredor"
-local File = require "coredor.file"
+local core = require "obs.utils"
+local File = require "obs.utils.file"
 local telescope = require "obs.telescope"
 
 -- options for VarProvider
@@ -97,7 +97,7 @@ function Templater:search_and_insert_template()
 end
 
 -- lists templates
----@return coredor.File[]
+---@return obs.utils.File[]
 function Templater:list_templates()
     local home_path_string = self._home_path:expand()
     return File.list(home_path_string, "*.md")

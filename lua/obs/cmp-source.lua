@@ -1,4 +1,4 @@
-local core = require "coredor"
+local core = require "obs.utils"
 
 local source = {}
 

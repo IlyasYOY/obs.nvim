@@ -16,7 +16,6 @@ Project is currently in WIP status.
 
 This project requires: 
 
-- [IlyasYOY/coredor.nvim: Core utils for nvim](https://github.com/IlyasYOY/coredor.nvim). Utility library I use for my plugins.
 - [nvim-lua/plenary.nvim: plenary: full; complete; entire; absolute; unqualified. All the lua functions I don't want to write twice.](https://github.com/nvim-lua/plenary.nvim). Collection of useful utilities: testing, IO, etc.
 - [nvim-telescope/telescope.nvim: Find, Filter, Preview, Pick. All lua, all the time.](https://github.com/nvim-telescope/telescope.nvim). Fuzzy-searching.
 
@@ -29,7 +28,6 @@ return {
     {
         "IlyasYOY/obs.nvim",
         dependencies = {
-            "IlyasYOY/coredor.nvim",
             "nvim-lua/plenary.nvim",
             "nvim-telescope/telescope.nvim",
         },

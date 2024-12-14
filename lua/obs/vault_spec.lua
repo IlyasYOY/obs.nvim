@@ -1,6 +1,6 @@
 local Vault = require "obs.vault"
-local spec = require "coredor.spec"
-local File = require "coredor.file"
+local spec = require "obs.utils.spec"
+local File = require "obs.utils.file"
 
 local function vault_fixture()
     local result = {}
@@ -23,7 +23,7 @@ local function vault_fixture()
 
     ---creates file in vault
     ---@param name string file name
-    ---@return coredor.File
+    ---@return obs.utils.File
     function result.create_file(name)
         ---@type Path
         local file_path = (vault_home.path / name)

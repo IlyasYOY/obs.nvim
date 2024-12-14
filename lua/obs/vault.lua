@@ -1,11 +1,11 @@
 local Link = require "obs.link"
 local Templater = require "obs.templater"
-local File = require "coredor.file"
+local File = require "obs.utils.file"
 local Journal = require "obs.journal"
 local Path = require "plenary.path"
 
 local obs_telescope = require "obs.telescope"
-local core = require "coredor"
+local core = require "obs.utils"
 local utils = require "obs.utils"
 
 -- table with vault options
@@ -102,7 +102,7 @@ end
 
 ---create notes with defaults to name structure applied
 ---@param name string?
----@return coredor.File?
+---@return obs.utils.File?
 function Vault:create_note(name)
     local time = self._time_provider()
     if not name or name == "" then
@@ -174,7 +174,7 @@ end
 ---renames the note
 ---@param name string
 ---@param new_name string
----@return coredor.File?
+---@return obs.utils.File?
 function Vault:rename(name, new_name)
     local note = self:get_note(name)
     if note == nil then
@@ -370,7 +370,7 @@ end
 
 ---get note from vault using name of the file
 ---@param name string
----@return coredor.File?
+---@return obs.utils.File?
 function Vault:get_note(name)
     local notes = self:list_notes()
 
@@ -392,21 +392,21 @@ function Vault:open_weekly()
 end
 
 ---lists notes from vault
----@return coredor.File[]
+---@return obs.utils.File[]
 function Vault:list_notes()
     return File.list(self._home_path:expand(), "**/*.md")
 end
 
 ---lists backlinks to a note using name
 ---@param name string
----@return coredor.File[]
+---@return obs.utils.File[]
 function Vault:list_backlinks(name)
     local note_for_name = self:get_note(name)
     if note_for_name == nil then
         return {}
     end
 
-    ---@type coredor.File[]
+    ---@type obs.utils.File[]
     local notes_with_backlinks = {}
     local notes = self:list_notes()
     for _, note in ipairs(notes) do

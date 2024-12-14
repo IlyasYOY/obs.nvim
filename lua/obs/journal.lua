@@ -1,5 +1,5 @@
 local Path = require "plenary.path"
-local File = require "coredor.file"
+local File = require "obs.utils.file"
 local telescope = require "obs.telescope"
 
 ---journal opts
@@ -71,7 +71,7 @@ function Journal:find_journal()
 end
 
 -- lists journal daily entries
----@return Array<coredor.File>
+---@return Array<obs.utils.File>
 function Journal:list_dailies()
     local path = self._home_path:expand()
     local files = File.list(path, self._date_glob .. ".md")
@@ -79,7 +79,7 @@ function Journal:list_dailies()
 end
 
 -- lists journal weekly entries
----@return Array<coredor.File>
+---@return Array<obs.utils.File>
 function Journal:list_weeklies()
     local path = self._home_path:expand()
     local files = File.list(path, self._week_glob .. ".md")
@@ -88,7 +88,7 @@ end
 
 -- get today note file
 ---@param create_if_missing boolean?
----@return coredor.File
+---@return obs.utils.File
 function Journal:today(create_if_missing)
     local filename = self._date_provider()
     ---@type Path
@@ -110,7 +110,7 @@ end
 
 -- get this week note file
 ---@param create_if_missing boolean?
----@return coredor.File
+---@return obs.utils.File
 function Journal:this_week(create_if_missing)
     local filename = self._week_provider()
     ---@type Path

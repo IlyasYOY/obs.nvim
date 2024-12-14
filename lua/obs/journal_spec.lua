@@ -2,8 +2,8 @@ local Path = require "plenary.path"
 local Journal = require "obs.journal"
 local Templater = require "obs.templater"
 
-local spec_utils = require "coredor.spec"
-local core = require "coredor"
+local spec_utils = require "obs.utils.spec"
+local core = require "obs.utils"
 
 local function journal_fixture()
     local result = {}

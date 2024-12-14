@@ -1,5 +1,5 @@
 local Link = require "obs.link"
-require "coredor.spec"
+require "obs.utils.spec"
 
 ---@param link obs.Link
 ---@param header string?
