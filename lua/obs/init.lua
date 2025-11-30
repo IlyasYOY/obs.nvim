@@ -69,23 +69,11 @@ end, {
     desc = "Opens weekly note",
 })
 
-vim.api.nvim_create_user_command("ObsNvimFindNote", function()
-    obs.vault:find_note()
-end, {
-    desc = "Find note",
-})
 
-vim.api.nvim_create_user_command("ObsNvimFindInJournal", function()
-    obs.vault:find_journal()
-end, {
-    desc = "Find note in journal",
-})
 
-vim.api.nvim_create_user_command("ObsNvimFindInNotes", function()
-    obs.vault:grep_note()
-end, {
-    desc = "Find in notes",
-})
+
+
+
 
 vim.api.nvim_create_user_command("ObsNvimBacklinks", function()
     obs.vault:run_if_note(function()

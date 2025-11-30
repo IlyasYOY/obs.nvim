@@ -4,7 +4,7 @@ local File = require "obs.utils.file"
 local Journal = require "obs.journal"
 local Path = require "plenary.path"
 
-local obs_telescope = require "obs.telescope"
+
 local core = require "obs.utils"
 local utils = require "obs.utils"
 
@@ -127,49 +127,36 @@ end
 
 function Vault:find_directory_and_move_current_note()
     local folders = utils.list_folders(self._home_path:expand())
-
     local current_note_filename = vim.fn.expand "%:t"
     local current_note_fullpath = vim.fn.expand "%"
     local current_buf = vim.api.nvim_get_current_buf()
 
-    return obs_telescope.find_through_items(
-        "Folders",
-        folders,
-        function(selection)
-            local from_file = File:new(selection.source)
-            from_file:as_plenary():copy {
-                destination = selection.destination,
-            }
-            vim.fn.execute(current_buf .. "bdelete")
-            File:new(selection.destination):edit()
-            from_file:as_plenary():rm()
-        end,
-        function(entry)
-            entry = File:new(entry)
-            local relative_string = entry:as_plenary():make_relative()
-            return {
-                value = relative_string,
-                display = relative_string,
-                ordinal = relative_string,
-                source = current_note_fullpath,
-                destination = (entry:as_plenary() / current_note_filename):expand(),
-            }
+    vim.ui.select(folders, {
+        prompt = "Move note to folder",
+        format_item = function(folder_path)
+            local file = File:new(folder_path)
+            return file:as_plenary():make_relative()
         end
-    )
+    }, function(choice)
+        if choice then
+            local destination = File:new(choice) / current_note_filename
+            local from_file = File:new(current_note_fullpath)
+            from_file:as_plenary():copy { destination = destination:expand() }
+            vim.cmd(current_buf .. "bdelete")
+            File:new(destination:expand()):edit()
+            from_file:as_plenary():rm()
+        end
+    end)
 end
 
-function Vault:find_note()
-    obs_telescope.find_files("Find notes", self._home_path:expand())
-end
+
 
 function Vault:find_current_note_backlinks()
     local current_note = File:new(core.current_working_file())
     self:find_backlinks(current_note:name())
 end
 
-function Vault:find_journal()
-    self._journal:find_journal()
-end
+
 
 ---renames the note
 ---@param name string
@@ -303,19 +290,24 @@ end
 
 function Vault:find_backlinks(name)
     local notes = self:list_backlinks(name)
-
-    obs_telescope.find_through_items("Backlinks", notes, nil, function(entry)
-        return {
-            value = entry:path(),
-            display = entry:name(),
-            ordinal = entry:name(),
-        }
+    if #notes == 0 then
+        vim.notify("No backlinks found")
+        return
+    end
+    
+    vim.ui.select(notes, {
+        prompt = "Backlinks",
+        format_item = function(note)
+            return note:name()
+        end
+    }, function(choice)
+        if choice then
+            vim.cmd("edit " .. choice:path())
+        end
     end)
 end
 
-function Vault:grep_note()
-    obs_telescope.grep_files("Grep notes", self._home_path:expand())
-end
+
 
 ---follows a link under the cursor
 function Vault:follow_link()

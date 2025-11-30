@@ -1,7 +1,7 @@
 local Path = require "plenary.path"
 local core = require "obs.utils"
 local File = require "obs.utils.file"
-local telescope = require "obs.telescope"
+
 
 -- options for VarProvider
 ---@class obs.VarProviderOpts
@@ -73,11 +73,19 @@ end
 ---seach for the template in vault and inserts expanded value
 function Templater:search_and_insert_template()
     local templates = self:list_templates()
-    return telescope.find_through_items(
-        "Templates",
-        templates,
-        function(selection)
-            local selected_file = selection.value
+    if #templates == 0 then
+        vim.notify("No templates found")
+        return
+    end
+
+    vim.ui.select(templates, {
+        prompt = "Templates",
+        format_item = function(template)
+            return template:name()
+        end
+    }, function(choice)
+        if choice then
+            local selected_file = choice:path()
             local templated_lines = core.lines_from(
                 selected_file,
                 function(line)
@@ -85,15 +93,8 @@ function Templater:search_and_insert_template()
                 end
             )
             vim.api.nvim_put(templated_lines, "", true, true)
-        end,
-        function(entry)
-            return {
-                value = entry:path(),
-                display = entry:name(),
-                ordinal = entry:name(),
-            }
         end
-    )
+    end)
 end
 
 -- lists templates

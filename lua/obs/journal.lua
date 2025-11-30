@@ -1,6 +1,6 @@
 local Path = require "plenary.path"
 local File = require "obs.utils.file"
-local telescope = require "obs.telescope"
+
 
 ---journal opts
 ---@class obs.JournalOpts
@@ -66,9 +66,7 @@ function Journal:open_weekly()
 end
 
 ---find in jounal files
-function Journal:find_journal()
-    return telescope.find_files("Dailies", self._home_path:expand())
-end
+
 
 -- lists journal daily entries
 ---@return Array<obs.utils.File>
