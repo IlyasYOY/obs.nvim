@@ -12,18 +12,18 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-24.04
+          - os: ubuntu-latest
             rev: nightly/nvim-linux64.tar.gz
             manager: sudo apt-get
             packages: -y ripgrep
-          - os: ubuntu-24.04
+          - os: ubuntu-latest
             rev: stable/nvim-linux64.tar.gz
             manager: sudo apt-get
-          - os: macos-14
+          - os: macos-latest
             rev: nightly/nvim-macos-x86_64.tar.gz
             manager: brew
             packages: ripgrep
-          - os: macos-14
+          - os: macos-latest
             rev: stable/nvim-macos-x86_64.tar.gz
             manager: brew
             packages: ripgrep
@@ -45,7 +45,6 @@ jobs:
           }
           mkdir -p ~/.local/share/nvim/site/pack/vendor/start
           git clone --depth 1 https://github.com/nvim-lua/plenary.nvim ~/.local/share/nvim/site/pack/vendor/start/plenary.nvim
-          git clone --depth 1 https://github.com/nvim-telescope/telescope.nvim ~/.local/share/nvim/site/pack/vendor/start/telescope.nvim
           git clone --depth 1 https://github.com/kyazdani42/nvim-web-devicons ~/.local/share/nvim/site/pack/vendor/start/nvim-web-devicons
           ln -s $(pwd) ~/.local/share/nvim/site/pack/vendor/start
       - name: Run tests
