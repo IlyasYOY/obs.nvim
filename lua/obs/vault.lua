@@ -4,7 +4,6 @@ local File = require "obs.utils.file"
 local Journal = require "obs.journal"
 local Path = require "plenary.path"
 
-
 local core = require "obs.utils"
 local utils = require "obs.utils"
 
@@ -136,7 +135,7 @@ function Vault:find_directory_and_move_current_note()
         format_item = function(folder_path)
             local file = File:new(folder_path)
             return file:as_plenary():make_relative()
-        end
+        end,
     }, function(choice)
         if choice then
             local destination = File:new(choice) / current_note_filename
@@ -149,14 +148,10 @@ function Vault:find_directory_and_move_current_note()
     end)
 end
 
-
-
 function Vault:find_current_note_backlinks()
     local current_note = File:new(core.current_working_file())
     self:find_backlinks(current_note:name())
 end
-
-
 
 ---renames the note
 ---@param name string
@@ -291,23 +286,21 @@ end
 function Vault:find_backlinks(name)
     local notes = self:list_backlinks(name)
     if #notes == 0 then
-        vim.notify("No backlinks found")
+        vim.notify "No backlinks found"
         return
     end
-    
+
     vim.ui.select(notes, {
         prompt = "Backlinks",
         format_item = function(note)
             return note:name()
-        end
+        end,
     }, function(choice)
         if choice then
             vim.cmd("edit " .. choice:path())
         end
     end)
 end
-
-
 
 ---follows a link under the cursor
 function Vault:follow_link()

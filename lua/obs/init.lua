@@ -69,12 +69,6 @@ end, {
     desc = "Opens weekly note",
 })
 
-
-
-
-
-
-
 vim.api.nvim_create_user_command("ObsNvimBacklinks", function()
     obs.vault:run_if_note(function()
         obs.vault:find_current_note_backlinks()

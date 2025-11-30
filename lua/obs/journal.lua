@@ -1,7 +1,6 @@
 local Path = require "plenary.path"
 local File = require "obs.utils.file"
 
-
 ---journal opts
 ---@class obs.JournalOpts
 ---@field public home string
@@ -66,7 +65,6 @@ function Journal:open_weekly()
 end
 
 ---find in jounal files
-
 
 -- lists journal daily entries
 ---@return Array<obs.utils.File>

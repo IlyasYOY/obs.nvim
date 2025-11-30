@@ -2,7 +2,6 @@ local Path = require "plenary.path"
 local core = require "obs.utils"
 local File = require "obs.utils.file"
 
-
 -- options for VarProvider
 ---@class obs.VarProviderOpts
 ---@field filename string?
@@ -74,7 +73,7 @@ end
 function Templater:search_and_insert_template()
     local templates = self:list_templates()
     if #templates == 0 then
-        vim.notify("No templates found")
+        vim.notify "No templates found"
         return
     end
 
@@ -82,7 +81,7 @@ function Templater:search_and_insert_template()
         prompt = "Templates",
         format_item = function(template)
             return template:name()
-        end
+        end,
     }, function(choice)
         if choice then
             local selected_file = choice:path()
