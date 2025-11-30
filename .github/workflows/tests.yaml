@@ -13,11 +13,11 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            rev: nightly/nvim-linux64.tar.gz
+            rev: nightly/nvim-linux-x86_64.tar.gz
             manager: sudo apt-get
             packages: -y ripgrep
           - os: ubuntu-latest
-            rev: stable/nvim-linux64.tar.gz
+            rev: stable/nvim-linux-x86_64.tar.gz
             manager: sudo apt-get
           - os: macos-latest
             rev: nightly/nvim-macos-x86_64.tar.gz
