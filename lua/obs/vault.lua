@@ -138,7 +138,7 @@ function Vault:find_directory_and_move_current_note()
         end,
     }, function(choice)
         if choice then
-            local destination = File:new(choice) / current_note_filename
+            local destination = File:new(choice):as_plenary() / current_note_filename
             local from_file = File:new(current_note_fullpath)
             from_file:as_plenary():copy { destination = destination:expand() }
             vim.cmd(current_buf .. "bdelete")
