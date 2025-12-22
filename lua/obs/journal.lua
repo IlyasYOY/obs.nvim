@@ -46,7 +46,7 @@ function Journal:new(templater, opts)
     journal._week_glob = opts.week_glob or "????-W??"
     journal._week_provider = opts.week_provider
         or function()
-            return os.date "%Y-W%W"
+            return os.date "%Y-W%V"
         end
 
     return journal
