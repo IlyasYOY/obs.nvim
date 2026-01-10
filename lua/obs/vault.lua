@@ -196,12 +196,11 @@ function Vault:copy_obsidian_link_to_current_note()
 end
 
 ---Opens current note in Obsidian
----@return string
 function Vault:open_obsidian_link_to_current_note()
     local link = self:get_obsidian_link_to_current_note()
     if link then
         vim.notify("opening a link: " .. link)
-        vim.cmd.Browse(link)
+        vim.ui.open(link)
     end
 end
 
