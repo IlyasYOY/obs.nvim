@@ -37,7 +37,7 @@ end
 describe("new note", function()
     local state = vault_fixture()
     local common_time = 1675255557
-    local common_name = "2023-02-01 " .. common_time
+    local common_name = "2023-02-01-" .. common_time
     local common_filename = common_name .. ".md"
     ---@type fun(): Path
     local common_filepath = function()
@@ -49,7 +49,7 @@ describe("new note", function()
 
         local file = state.vault:create_note "cool note"
 
-        local expected_name = "2023-02-01 cool note"
+        local expected_name = "2023-02-01-cool note"
         local expected_filename = expected_name .. ".md"
 
         assert(file)
