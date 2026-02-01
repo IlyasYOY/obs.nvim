@@ -108,7 +108,7 @@ function Vault:create_note(name)
         name = time
     end
 
-    local name_prefix = os.date("%Y-%m-%d ", time)
+    local name_prefix = os.date("%Y-%m-%d-", time)
     local fullname = name_prefix .. name
     if self:get_note(fullname) then
         return nil
