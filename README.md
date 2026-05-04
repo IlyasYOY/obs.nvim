@@ -40,6 +40,19 @@ return {
                 journal = {
                     template_name = "daily",
                 },
+                templater = {
+                    home = "~/Notes/meta/templates"
+                    extra_providers = {
+                      {
+                        name = "descr",
+                        func = function()
+                          local val = vim.fn.input "Enter description: "
+                          return val
+                        end,
+                      },
+                   },
+                }
+
             }
 
             vim.keymap.set("n", "<leader>nn", "<cmd>ObsNvimFollowLink<cr>")
