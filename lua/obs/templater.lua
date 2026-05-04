@@ -21,6 +21,7 @@ local File = require "obs.utils.file"
 ---@class obs.TemplaterOpts
 ---@field public include_default_providers? boolean
 ---@field public home string
+---@field public extra_providers? obs.VarProvider[]
 local TemplaterOpts = {}
 TemplaterOpts.__index = TemplaterOpts
 
@@ -29,6 +30,7 @@ function TemplaterOpts:new(opts)
     local this = setmetatable(
         vim.tbl_extend("force", {
             include_default_providers = true,
+            extra_providers = {},
         }, opts),
         self
     )
@@ -66,6 +68,12 @@ function Templater:new(opts)
         end)
     end
 
+    if opts.extra_providers then
+        for _, provider in ipairs(opts.extra_providers) do
+            templater:add_var_provider(provider.name, provider.func)
+        end
+    end
+
     return templater
 end
 
@@ -73,7 +81,7 @@ end
 function Templater:search_and_insert_template()
     local templates = self:list_templates()
     if #templates == 0 then
-        vim.notify "No templates found"
+        vim.notify ( "No templates found: " .. tostring(self._home_path) ) 
         return
     end
 
@@ -127,22 +135,21 @@ function Templater:process(opts)
         or self:_get_raw_template_content(opts.template_name)
 
     if not template then
-        error(
-            "must have template or template_name specified but was "
-                .. vim.inspect(opts)
-        )
+        error("must have template or template_name specified")
     end
 
     for _, var_provider in ipairs(self._var_providers) do
         local name = var_provider.name
-        local func = var_provider.func
-        local res = func { filename = opts.filename }
-        template = string.gsub(template, "{{" .. name .. "}}", res)
+        local tag = "{{" .. name .. "}}"
+        if string.find(template, tag, 1, true) then
+            local func = var_provider.func
+            local res = func { filename = opts.filename }
+            template = string.gsub(template, tag, res)
+        end
     end
 
     return template
 end
-
 -- performs templating using raw content and current buffer name
 ---@param template string
 ---@return string
