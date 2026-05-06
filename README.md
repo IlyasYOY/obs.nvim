@@ -41,7 +41,7 @@ return {
                     template_name = "daily",
                 },
                 templater = {
-                    home = "~/Notes/meta/templates"
+                    home = "~/Notes/meta/templates",
                     extra_providers = {
                       {
                         name = "descr",
@@ -50,7 +50,7 @@ return {
                           return val
                         end,
                       },
-                   },
+                    },
                 }
 
             }

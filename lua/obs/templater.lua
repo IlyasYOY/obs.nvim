@@ -81,7 +81,7 @@ end
 function Templater:search_and_insert_template()
     local templates = self:list_templates()
     if #templates == 0 then
-        vim.notify ( "No templates found: " .. tostring(self._home_path) ) 
+        vim.notify "No templates found"
         return
     end
 
