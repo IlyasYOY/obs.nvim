@@ -1,27 +1,24 @@
-# obs.nvim 
+# obs.nvim
 
-Simple **NeoVim** plugin with Obsidian-like-notes support.
+`obs.nvim` is a WIP Neovim plugin for Obsidian-like Markdown notes.
 
-Why is it better than Obsidian: 
+It is built around a local note vault and small Neovim commands for common
+note workflows:
 
-- Making **notes inside NeoVim** during coding sessions.
-- **Lua** as extension language.
-- Existing **NeoVim infrastructure**.
-
-## Status 
-
-Project is currently in WIP status.
+- write notes without leaving Neovim
+- follow `[[wiki links]]`
+- create daily and weekly journal notes
+- insert Markdown templates
+- rename, move, and inspect backlinks for notes
+- copy or open Obsidian links for the current note
 
 ## Installation
 
-This project requires: 
+Required dependency:
 
-- [nvim-lua/plenary.nvim: plenary: full; complete; entire; absolute; unqualified. All the lua functions I don't want to write twice.](https://github.com/nvim-lua/plenary.nvim). Collection of useful utilities: testing, IO, etc.
+- [nvim-lua/plenary.nvim](https://github.com/nvim-lua/plenary.nvim)
 
-
-Plugin provides a [source](https://github.com/IlyasYOY/obs.nvim/blob/main/lua/obs/cmp-source.lua) for completion using [hrsh7th/nvim-cmp: A completion plugin for neovim coded in Lua.](https://github.com/hrsh7th/nvim-cmp).
-
-Example installation using [folke/lazy.nvim](https://github.com/folke/lazy.nvim): 
+Example installation with [folke/lazy.nvim](https://github.com/folke/lazy.nvim):
 
 ```lua
 return {
@@ -30,7 +27,6 @@ return {
         dependencies = {
             "nvim-lua/plenary.nvim",
         },
-        dev = true,
         config = function()
             local obs = require "obs"
 
@@ -38,21 +34,20 @@ return {
                 vault_home = "~/Notes",
                 vault_name = "Notes",
                 journal = {
-                    template_name = "daily",
+                    daily_template_name = "daily",
+                    weekly_template_name = "weekly",
                 },
                 templater = {
                     home = "~/Notes/meta/templates",
                     extra_providers = {
-                      {
-                        name = "descr",
-                        func = function()
-                          local val = vim.fn.input "Enter description: "
-                          return val
-                        end,
-                      },
+                        {
+                            name = "descr",
+                            func = function()
+                                return vim.fn.input "Enter description: "
+                            end,
+                        },
                     },
-                }
-
+                },
             }
 
             vim.keymap.set("n", "<leader>nn", "<cmd>ObsNvimFollowLink<cr>")
@@ -66,7 +61,6 @@ return {
             vim.keymap.set("n", "<leader>nT", "<cmd>ObsNvimTemplate<cr>")
             vim.keymap.set("n", "<leader>nM", "<cmd>ObsNvimMove<cr>")
             vim.keymap.set("n", "<leader>nb", "<cmd>ObsNvimBacklinks<cr>")
-
         end,
     },
 }
@@ -74,45 +68,55 @@ return {
 
 ## Configuration
 
-My configuration you can find [here](https://github.com/IlyasYOY/dotfiles/blob/master/config/nvim/lua/plugins/obs-nvim.lua).
+My configuration is
+[here](https://github.com/IlyasYOY/dotfiles/blob/master/config/nvim/lua/plugins/obs-nvim.lua).
 
-### setup 
+`obs.setup()` accepts `obs.VaultOpts`, defined in
+[`lua/obs/vault.lua`](https://github.com/IlyasYOY/obs.nvim/blob/main/lua/obs/vault.lua).
 
-Example `setup`:
+The most useful defaults are:
 
-```lua 
-obs.setup {
-    journal = {
-        -- setting for daily note template name
-        daily_template_name = "daily",
-    },
-}
-```
+- `vault_home = "~/vimwiki"`
+- `vault_name = "vimwiki"`
+- `templater.home = "<vault_home>/meta/templates"`
+- `journal.home = "<vault_home>/diary"`
+- `journal.date_glob = "????-??-??"`
+- `journal.week_glob = "????-W??"`
 
-Type definition for table is provided [here](https://github.com/IlyasYOY/obs.nvim/blob/main/lua/obs/vault.lua) as `obs.VaultOpts`.
+Daily notes use `journal.daily_template_name`. Weekly notes use
+`journal.weekly_template_name`. The older `journal.template_name` option still
+works as a deprecated alias for the daily template.
 
-I won't go over all configuration options in details. There are the most important defaults the plugin provides: 
+Templates are Markdown files in `templater.home`. The default template variables
+are:
 
-- `~/vimwiki` as directory for notes, with sub-directories:
-    - `./meta/templates` as templates folder.
-    - `./diary` as daily notes folder.
+| Variable | Value |
+| --- | --- |
+| `{{date}}` | Current date as `YYYY-MM-DD` |
+| `{{title}}` | Current buffer filename without `.md` |
 
-### mappings 
+You can add custom variables with `templater.extra_providers`.
 
-Example mappings configuration may be found [here](https://github.com/IlyasYOY/dotfiles/blob/master/config/nvim/lua/plugins/obs-nvim.lua).
+## Commands
 
-- *Insert template.* `:ObsNvimTemplate` opens dialog to select and insert template. 
-- *Follow link under cursor.* `:ObsNvimFollowLink`.
-- *Open random note.* `:ObsNvimRandomNote`.
-- *Copy obsidian link to a current note.* `:ObsNvimCopyObsidianLinkToNote`.
-- *Open obsidian link to a current note.* `:ObsNvimOpenInObsidian`.
-- *Creates a new note.* `:ObsNvimNewNote` prefixes note with `YYYY-MM-dd`. In case of empty name plugin generates name from time-stamp. Example: `2023-03-12 1678625141.md`.
-- *Opens daily note.* `:ObsNvimDailyNote` creates one if doesn't exist. 
-- *Opens weekly note.* `:ObsNvimWeeklyNote` creates one if doesn't exist. 
-- *Find backlinks.* `:ObsNvimBacklinks`.
-- *Renames current note.* `:ObsNvimRename` updates links to the note. I advice you to rename notes inside **Obsidian** for important notes with lots of back-links. 
-- *Move note to directory.* `:ObsNvimMove` opens dialog to select directory to move current note to.
+| Command | Description |
+| --- | --- |
+| `:ObsNvimTemplate` | Select and insert a template into the current note. |
+| `:ObsNvimFollowLink` | Follow the `[[wiki link]]` under the cursor. |
+| `:ObsNvimRandomNote` | Open a random note from the vault. |
+| `:ObsNvimNewNote` | Create a note prefixed with `YYYY-MM-DD-`; empty names use the current timestamp. |
+| `:ObsNvimDailyNote` | Open today's daily note, creating it if needed. |
+| `:ObsNvimWeeklyNote` | Open this week's weekly note, creating it if needed. |
+| `:ObsNvimBacklinks` | Select from notes that link to the current note. |
+| `:ObsNvimRename` | Rename the current note and update matching wiki links. |
+| `:ObsNvimMove` | Select a vault directory and move the current note there. |
+| `:ObsNvimCopyObsidianLinkToNote` | Copy an Obsidian URL for the current note. |
+| `:ObsNvimOpenInObsidian` | Open the current note in Obsidian. |
 
-## Tips 
+Most commands that act on the current buffer require the file to be a Markdown
+note inside the configured vault.
 
-- [Here](https://github.com/IlyasYOY/dotfiles/blob/master/config/nvim/snippets/markdown.lua) you can find useful **LuaSnip** snippets for **Obsidian**.
+## Tips
+
+- Useful LuaSnip snippets for Obsidian are
+  [here](https://github.com/IlyasYOY/dotfiles/blob/master/config/nvim/snippets/markdown.lua).
