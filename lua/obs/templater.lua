@@ -135,7 +135,7 @@ function Templater:process(opts)
         or self:_get_raw_template_content(opts.template_name)
 
     if not template then
-        error("must have template or template_name specified")
+        error "must have template or template_name specified"
     end
 
     for _, var_provider in ipairs(self._var_providers) do

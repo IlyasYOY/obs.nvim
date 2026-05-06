@@ -140,68 +140,89 @@ describe("process string", function()
     --  Tests of users extra_providers
 
     it("can be initialized with extra_providers in opts", function()
-        local templater = Templater:new {
-            home = ".",
-            extra_providers = {
-                {
-                    name = "callme",
-                    func = function() return "custom_val" end
-                }
-            }
-        }
-
-        local result = templater:process({ template = "Value: {{callme}}" })
-
-        assert.are.equal(
-            "Value: custom_val",
-            result,
-            "extra_providers from opts were not registered"
-        )
-    end)
-
-    it("does not call provider function if tag is not in template (lazy evaluation)", function()
-        local call_count = 0
-        local templater = Templater:new {
+        local custom_templater = Templater:new {
             home = ".",
             extra_providers = {
                 {
                     name = "callme",
                     func = function()
-                        call_count = call_count + 1
-                        return "input"
-                    end
-                }
-            }
+                        return "custom_val"
+                    end,
+                },
+            },
         }
-        -- case 1  not tag - not call 
-        local _ = templater:process({ template = "No tags here" })
-        assert.are.equal(0, call_count, "Provider function was called unexpectedly")
 
-        -- case 2  tag is - call is 
-        local result = templater:process({ template = "Tag: {{callme}}" })
-        assert.are.equal(1, call_count, "Provider function should be called exactly once")
-        assert.are.equal("Tag: input", result)
+        local processed =
+            custom_templater:process { template = "Value: {{callme}}" }
+
+        assert.are.equal(
+            "Value: custom_val",
+            processed,
+            "extra_providers from opts were not registered"
+        )
     end)
 
-   it("calls provider only once for multiple occurrences of the same tag", function()
-    local call_count = 0
-    local templater = Templater:new {
-        home = ".",
-        extra_providers = {
-            {
-                name = "multi",
-                func = function() 
-                    call_count = call_count + 1
-                    return "val" 
-                end
+    it(
+        "does not call provider function if tag is not in template (lazy evaluation)",
+        function()
+            local call_count = 0
+            local custom_templater = Templater:new {
+                home = ".",
+                extra_providers = {
+                    {
+                        name = "callme",
+                        func = function()
+                            call_count = call_count + 1
+                            return "input"
+                        end,
+                    },
+                },
             }
-        }
-    }
+            local _ = custom_templater:process { template = "No tags here" }
+            assert.are.equal(
+                0,
+                call_count,
+                "Provider function was called unexpectedly"
+            )
 
-    local template = "{{multi}} {{multi}} {{multi}}"
-    local result = templater:process({ template = template })
+            local processed =
+                custom_templater:process { template = "Tag: {{callme}}" }
+            assert.are.equal(
+                1,
+                call_count,
+                "Provider function should be called exactly once"
+            )
+            assert.are.equal("Tag: input", processed)
+        end
+    )
 
-    assert.are.equal("val val val", result)
-    assert.are.equal(1, call_count, "Provider should be called exactly once for all occurrences")
-  end)
+    it(
+        "calls provider only once for multiple occurrences of the same tag",
+        function()
+            local call_count = 0
+            local custom_templater = Templater:new {
+                home = ".",
+                extra_providers = {
+                    {
+                        name = "multi",
+                        func = function()
+                            call_count = call_count + 1
+                            return "val"
+                        end,
+                    },
+                },
+            }
+
+            local repeated_template = "{{multi}} {{multi}} {{multi}}"
+            local processed =
+                custom_templater:process { template = repeated_template }
+
+            assert.are.equal("val val val", processed)
+            assert.are.equal(
+                1,
+                call_count,
+                "Provider should be called exactly once for all occurrences"
+            )
+        end
+    )
 end)

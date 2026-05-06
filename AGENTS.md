@@ -8,24 +8,24 @@
   `:ObsNvim...` user commands.
 - Core modules use module tables/classes with `new()` constructors, plus
   LSPLua annotations for public types and function contracts.
-- `plenary.nvim` is the main dependency, especially `plenary.path` and
-  plenary's busted test runner.
+- `plenary.nvim` is the main dependency, especially `plenary.path`.
 
 ## Build/Test Commands
-- `make test` - run all specs with plenary in headless Neovim.
+- `make test` - run all specs with the local headless Neovim runner.
+- `make test-verbose` - run all specs with per-test success output.
 - Single spec:
-  `nvim --headless -u scripts/minimal_init.lua -c "PlenaryBustedFile path/to/test_spec.lua"`
+  `nvim --headless --noplugin -u tests/minimal_init.lua -c 'lua require("tests.runner").run({ files = { "path/to/test_spec.lua" }, verbose = true })' -c qa`
 - `make lint` - run luacheck and stylua checks.
 - `make lint_luacheck` - run luacheck only.
 - `make lint_stylua` - run stylua in check mode.
 - `make format` - format Lua files with stylua.
 
 ## Test Environment Notes
-- `scripts/minimal_init.lua` sets an isolated runtime and packpath under
-  `.tests/site`.
+- `tests/minimal_init.lua` sets an isolated runtime and XDG home under
+  `.test-home`.
 - On a fresh checkout, the test bootstrap clones `nvim-lua/plenary.nvim`
-  into `.tests/site/pack/deps/start/plenary.nvim`, so the first test run may
-  need network access.
+  into `.test-deps/plenary.nvim`, so the first test run may need network
+  access.
 - Keep tests isolated from the user's real vault/home. Use helpers from
   `lua/obs/utils/spec.lua`, especially temp fixtures and custom assertions.
 - Prefer injectable providers such as `time_provider`, `date_provider`, and

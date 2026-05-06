@@ -40,4 +40,6 @@ luac.out
 *.hex
 
 .tests
-
+.test-home
+.test-deps
+nvim.log
