@@ -193,8 +193,9 @@ describe("journal", function()
         end)
 
         it("creates missing nested journal directory", function()
-            local journal_home =
-                test_state.journal_dir_path.path / "missing" / "diary"
+            local journal_home = test_state.journal_dir_path.path
+                / "missing"
+                / "diary"
             test_state.journal = Journal:new(test_state.templater, {
                 home = journal_home:expand(),
                 date_provider = function()
@@ -214,10 +215,7 @@ describe("journal", function()
                 journal_home:exists(),
                 "journal directory was not created"
             )
-            assert.is_true(
-                expected_path:exists(),
-                "daily note was not created"
-            )
+            assert.is_true(expected_path:exists(), "daily note was not created")
             assert.are.equal(expected_path:expand(), result:path())
         end)
 

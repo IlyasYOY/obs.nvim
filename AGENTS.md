@@ -14,6 +14,8 @@
 ## Build/Test Commands
 - `make test` - run all specs with the local headless Neovim runner.
 - `make test-verbose` - run all specs with per-test success output.
+- `make check` - run formatting checks, luacheck, and all specs. Run this
+  before considering GitHub issue work complete.
 - Single spec:
   `nvim --headless --noplugin -u tests/minimal_init.lua -c 'lua require("tests.runner").run({ files = { "path/to/test_spec.lua" }, verbose = true })' -c qa`
 - Before considering a feature complete, run tests against the same Neovim
