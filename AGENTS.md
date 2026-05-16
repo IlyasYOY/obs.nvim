@@ -52,5 +52,14 @@
   `vim.fn.input`, `vim.api.nvim_create_user_command`, and `vim.api.nvim_put`.
 - When adding behavior to vault, journal, templater, link, or file utilities,
   add focused specs near the touched module.
+- Wiki link completion lives in `lua/obs/completion.lua` and should stay based
+  on built-in Neovim completion (`completefunc` plus the `F` source in
+  `complete`). Do not replace user `omnifunc`, do not enable `autocomplete`
+  automatically, and keep `completion = { enabled = false }` as the opt-out.
+- Completion candidates for `[[...]]` must insert bare note names, not bracketed
+  links. The replacement start should remain after the nearest `[[` so applying
+  a candidate inside `[[foo]]` preserves one pair of brackets.
+- Add or update `lua/obs/completion_spec.lua` when changing completion context
+  detection, candidate shape, or buffer-local attach behavior.
 - Keep changes scoped to the requested behavior; avoid broad refactors unless
   they are needed to make the fix correct.
