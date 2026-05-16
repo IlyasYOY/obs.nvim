@@ -25,7 +25,7 @@ local function vault_fixture()
     ---@param name string file name
     ---@return obs.utils.File
     function result.create_file(name)
-        ---@type Path
+        ---@type obs.utils.Path
         local file_path = (vault_home.path / name)
         file_path:touch()
         return File:new(file_path:expand())
@@ -39,7 +39,7 @@ describe("new note", function()
     local common_time = 1675255557
     local common_name = "2023-02-01-" .. common_time
     local common_filename = common_name .. ".md"
-    ---@type fun(): Path
+    ---@type fun(): obs.utils.Path
     local common_filepath = function()
         return state.home / common_filename
     end
@@ -118,7 +118,7 @@ describe("find backlinks", function()
     end)
 
     it("one backlink", function()
-        ---@type Path
+        ---@type obs.utils.Path
         local note1 = (state.home / "note1.md")
         note1:touch()
         note1:write("This is file with a link to [[note]].", "w")
@@ -133,12 +133,12 @@ describe("find backlinks", function()
     end)
 
     it("multiple backlink", function()
-        ---@type Path
+        ---@type obs.utils.Path
         local note1 = (state.home / "note1.md")
         note1:touch()
         note1:write("This is file with a link to [[note]].", "w")
 
-        ---@type Path
+        ---@type obs.utils.Path
         local note2 = (state.home / "note2.md")
         note2:touch()
         note2:write("This is the second file with a link to [[note]].", "w")
@@ -152,7 +152,7 @@ describe("find backlinks", function()
     end)
 
     it("multiple links per file backlink", function()
-        ---@type Path
+        ---@type obs.utils.Path
         local note1 = (state.home / "note1.md")
         note1:touch()
         note1:write(
@@ -251,9 +251,7 @@ describe("rename", function()
     it("simple link renamed", function()
         state.create_file "test.md"
         local note_with_link_path = state.create_file "note-with-link.md"
-        note_with_link_path
-            :as_plenary()
-            :write("This s a link to test.md [[test]].", "w")
+        note_with_link_path:write("This s a link to test.md [[test]].", "w")
 
         state.vault:rename("test", "new test")
 
@@ -267,9 +265,10 @@ describe("rename", function()
     it("regex-like (with magic characters) link renamed", function()
         state.create_file "2022-01-01 something.md"
         local note_with_link_path = state.create_file "note-with-link.md"
-        note_with_link_path
-            :as_plenary()
-            :write("This s a link to test.md [[2022-01-01 something]].", "w")
+        note_with_link_path:write(
+            "This s a link to test.md [[2022-01-01 something]].",
+            "w"
+        )
 
         state.vault:rename("2022-01-01 something", "new test")
 
@@ -283,9 +282,10 @@ describe("rename", function()
     it("alias link renamed", function()
         state.create_file "test.md"
         local note_with_link_path = state.create_file "note-with-link.md"
-        note_with_link_path
-            :as_plenary()
-            :write("This s a link to test.md [[test|alias]].", "w")
+        note_with_link_path:write(
+            "This s a link to test.md [[test|alias]].",
+            "w"
+        )
 
         state.vault:rename("test", "new test")
 
@@ -299,9 +299,10 @@ describe("rename", function()
     it("header link renamed", function()
         state.create_file "test.md"
         local note_with_link_path = state.create_file "note-with-link.md"
-        note_with_link_path
-            :as_plenary()
-            :write("This s a link to test.md [[test#header]].", "w")
+        note_with_link_path:write(
+            "This s a link to test.md [[test#header]].",
+            "w"
+        )
 
         state.vault:rename("test", "new test")
 

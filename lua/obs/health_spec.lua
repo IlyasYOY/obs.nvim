@@ -1,4 +1,4 @@
-local Path = require "plenary.path"
+local Path = require "obs.utils.path"
 local health = require "obs.health"
 local obs = require "obs"
 local spec = require "obs.utils.spec"
@@ -60,7 +60,6 @@ describe("health", function()
 
         assert_report(reports, "start", "obs.nvim")
         assert_report(reports, "ok", "obs.nvim is available")
-        assert_report(reports, "ok", "plenary.nvim is available")
         assert_report(reports, "warn", "obs.setup() has not been called")
     end)
 

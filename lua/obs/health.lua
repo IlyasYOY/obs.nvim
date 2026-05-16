@@ -79,7 +79,7 @@ local function check_commands()
     end
 end
 
----@param path Path?
+---@param path obs.utils.Path?
 ---@param label string
 ---@param missing_level "warn"|"error"
 ---@return boolean
@@ -219,7 +219,6 @@ function M.check()
     vim.health.start "obs.nvim"
 
     local obs_loaded, obs = check_module("obs", "obs.nvim")
-    check_module("plenary.path", "plenary.nvim")
 
     check_function("vim.ui.select", vim.ui and vim.ui.select)
     check_function("vim.ui.open", vim.ui and vim.ui.open)

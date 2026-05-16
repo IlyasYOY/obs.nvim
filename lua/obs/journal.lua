@@ -1,4 +1,4 @@
-local Path = require "plenary.path"
+local Path = require "obs.utils.path"
 local File = require "obs.utils.file"
 
 ---journal opts
@@ -19,7 +19,7 @@ local File = require "obs.utils.file"
 ---@field private _date_provider fun(): string the result is used as a file name to the day entry
 ---@field private _week_glob string the glob pattern used to list weekly notes
 ---@field private _week_provider fun(): string the result is used as a file name to the week entry
----@field protected _home_path Path home location for daily notes
+---@field protected _home_path obs.utils.Path home location for daily notes
 ---@field protected _daily_template_name string template name to be used in daily notes
 ---@field protected _weekly_template_name string template name to be used in daily notes
 local Journal = {}
@@ -87,7 +87,7 @@ end
 ---@return obs.utils.File
 function Journal:today(create_if_missing)
     local filename = self._date_provider()
-    ---@type Path
+    ---@type obs.utils.Path
     local path = self._home_path / (filename .. ".md")
 
     if create_if_missing and not path:exists() then
@@ -109,7 +109,7 @@ end
 ---@return obs.utils.File
 function Journal:this_week(create_if_missing)
     local filename = self._week_provider()
-    ---@type Path
+    ---@type obs.utils.Path
     local path = self._home_path / (filename .. ".md")
 
     if create_if_missing and not path:exists() then

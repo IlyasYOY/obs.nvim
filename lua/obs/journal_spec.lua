@@ -1,4 +1,4 @@
-local Path = require "plenary.path"
+local Path = require "obs.utils.path"
 local Journal = require "obs.journal"
 local Templater = require "obs.templater"
 
@@ -69,7 +69,7 @@ describe("journal", function()
 
             local result = test_state.journal:this_week()
 
-            ---@type Path
+            ---@type obs.utils.Path
             local path = Path:new(result:path())
 
             assert.is_false(path:exists(), "file was created")
@@ -84,7 +84,7 @@ describe("journal", function()
 
             local result = test_state.journal:this_week(true)
 
-            ---@type Path
+            ---@type obs.utils.Path
             local path = Path:new(result:path())
 
             assert.is_true(path:exists(), "file was not created")
@@ -98,7 +98,7 @@ describe("journal", function()
                 weekly_template_name = "weekly",
             }
 
-            ---@type Path
+            ---@type obs.utils.Path
             local daily_file_template = Path:new(
                 test_state.templates_dir_path.path
             ) / "weekly.md"
@@ -108,7 +108,7 @@ describe("journal", function()
 
             local result = test_state.journal:this_week(true)
 
-            ---@type Path
+            ---@type obs.utils.Path
             local path = Path:new(result:path())
             local resulting_text = path:read()
 
@@ -171,7 +171,7 @@ describe("journal", function()
 
             local result = test_state.journal:today()
 
-            ---@type Path
+            ---@type obs.utils.Path
             local path = Path:new(result:path())
 
             assert.is_false(path:exists(), "file was created")
@@ -186,7 +186,7 @@ describe("journal", function()
 
             local result = test_state.journal:today(true)
 
-            ---@type Path
+            ---@type obs.utils.Path
             local path = Path:new(result:path())
 
             assert.is_true(path:exists(), "file was not created")
@@ -200,7 +200,7 @@ describe("journal", function()
                 daily_template_name = "daily",
             }
 
-            ---@type Path
+            ---@type obs.utils.Path
             local daily_file_template = Path:new(
                 test_state.templates_dir_path.path
             ) / "daily.md"
@@ -210,7 +210,7 @@ describe("journal", function()
 
             local result = test_state.journal:today(true)
 
-            ---@type Path
+            ---@type obs.utils.Path
             local path = Path:new(result:path())
             local resulting_text = path:read()
 
@@ -233,7 +233,7 @@ describe("journal", function()
                 template_name = "daily",
             }
 
-            ---@type Path
+            ---@type obs.utils.Path
             local daily_file_template = Path:new(
                 test_state.templates_dir_path.path
             ) / "daily.md"
@@ -243,7 +243,7 @@ describe("journal", function()
 
             local result = test_state.journal:today(true)
 
-            ---@type Path
+            ---@type obs.utils.Path
             local path = Path:new(result:path())
             local resulting_text = path:read()
 

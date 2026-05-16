@@ -8,7 +8,8 @@
   `:ObsNvim...` user commands.
 - Core modules use module tables/classes with `new()` constructors, plus
   LSPLua annotations for public types and function contracts.
-- `plenary.nvim` is the main dependency, especially `plenary.path`.
+- Filesystem path handling is implemented locally in `lua/obs/utils/path.lua`
+  and wrapped by `lua/obs/utils/file.lua`.
 
 ## Build/Test Commands
 - `make test` - run all specs with the local headless Neovim runner.
@@ -23,9 +24,8 @@
 ## Test Environment Notes
 - `tests/minimal_init.lua` sets an isolated runtime and XDG home under
   `.test-home`.
-- On a fresh checkout, the test bootstrap clones `nvim-lua/plenary.nvim`
-  into `.test-deps/plenary.nvim`, so the first test run may need network
-  access.
+- The test bootstrap runs against the local plugin code and isolated XDG home;
+  it does not install plugin dependencies.
 - Keep tests isolated from the user's real vault/home. Use helpers from
   `lua/obs/utils/spec.lua`, especially temp fixtures and custom assertions.
 - Prefer injectable providers such as `time_provider`, `date_provider`, and
@@ -46,7 +46,7 @@
   globals, `assert`, and the existing Telescope/debug globals).
 
 ## Implementation Patterns
-- Prefer `plenary.path` and the local `obs.utils.file` wrapper for filesystem
+- Prefer `obs.utils.path` and the local `obs.utils.file` wrapper for filesystem
   behavior in plugin code.
 - Keep user interactions routed through Neovim APIs such as `vim.ui.select`,
   `vim.fn.input`, `vim.api.nvim_create_user_command`, and `vim.api.nvim_put`.

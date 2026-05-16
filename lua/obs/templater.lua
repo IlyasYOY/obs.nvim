@@ -1,4 +1,4 @@
-local Path = require "plenary.path"
+local Path = require "obs.utils.path"
 local core = require "obs.utils"
 local File = require "obs.utils.file"
 
@@ -40,7 +40,7 @@ end
 -- class to run templating
 ---@class obs.Templater
 ---@field private _var_providers obs.VarProvider[]
----@field private _home_path Path to the tamplates directory
+---@field private _home_path obs.utils.Path to the templates directory
 local Templater = {}
 
 -- create new Templater instance
@@ -54,7 +54,7 @@ function Templater:new(opts)
 
     templater._var_providers = {}
 
-    ---@type Path
+    ---@type obs.utils.Path
     templater._home_path = Path:new(vim.fn.resolve(opts.home))
 
     if opts.include_default_providers then

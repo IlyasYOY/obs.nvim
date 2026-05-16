@@ -7,8 +7,7 @@ NVIM_VERSION ?=
 DEPDIR ?= .test-deps
 CURL ?= curl -fL --retry 5 --retry-delay 5 --retry-connrefused --create-dirs
 TEST_HOME ?= $(CURDIR)/.test-home
-TEST_DEPS ?= $(abspath $(DEPDIR))
-TEST_ENV := OBS_TEST_HOME=$(TEST_HOME) OBS_TEST_DEPS=$(TEST_DEPS) XDG_CONFIG_HOME=$(TEST_HOME)/config XDG_DATA_HOME=$(TEST_HOME)/data XDG_CACHE_HOME=$(TEST_HOME)/cache XDG_STATE_HOME=$(TEST_HOME)/state
+TEST_ENV := OBS_TEST_HOME=$(TEST_HOME) XDG_CONFIG_HOME=$(TEST_HOME)/config XDG_DATA_HOME=$(TEST_HOME)/data XDG_CACHE_HOME=$(TEST_HOME)/cache XDG_STATE_HOME=$(TEST_HOME)/state
 LUA_FILES := lua tests
 
 ifeq ($(shell uname -s),Darwin)

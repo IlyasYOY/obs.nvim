@@ -1,10 +1,10 @@
-local Path = require "plenary.path"
+local Path = require "obs.utils.path"
 local utils = require "obs.utils"
 
 local M = {}
 
 ---@class obs.utils.spec.Path
----@field public path Path path to the directory
+---@field public path obs.utils.Path path to the directory
 
 ---Creates empty file per test
 ---@return obs.utils.spec.Path
@@ -20,7 +20,7 @@ function M.temp_file_fixture()
     end)
 
     after_each(function()
-        os.execute("rm -f " .. result.path:expand())
+        result.path:rm()
     end)
 
     return result
@@ -40,7 +40,7 @@ function M.temp_dir_fixture()
     end)
 
     after_each(function()
-        os.execute("rm -rf " .. result.path:expand())
+        result.path:rm()
     end)
 
     return result

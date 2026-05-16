@@ -14,19 +14,12 @@ note workflows:
 
 ## Installation
 
-Required dependency:
-
-- [nvim-lua/plenary.nvim](https://github.com/nvim-lua/plenary.nvim)
-
 Example installation with [folke/lazy.nvim](https://github.com/folke/lazy.nvim):
 
 ```lua
 return {
     {
         "IlyasYOY/obs.nvim",
-        dependencies = {
-            "nvim-lua/plenary.nvim",
-        },
         config = function()
             local obs = require "obs"
 

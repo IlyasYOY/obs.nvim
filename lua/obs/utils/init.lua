@@ -1,6 +1,5 @@
-local Path = require "plenary.path"
-
 local M = {}
+local uv = vim.uv or vim.loop
 
 ---Merges strings to a text blob
 ---@param strings string[] array of strings to merge
@@ -151,9 +150,16 @@ end
 ---@param filename string of the file we read it
 ---@return boolean if the file exists
 local function file_exists(filename)
-    ---@type Path
-    local path = Path:new(filename)
-    return path:exists()
+    if filename == nil then
+        return false
+    end
+
+    local expanded = vim.fn.expand(filename)
+    if expanded == "" then
+        return false
+    end
+
+    return uv.fs_stat(vim.fn.fnamemodify(expanded, ":p")) ~= nil
 end
 
 M.file_exists = file_exists
@@ -243,12 +249,11 @@ function M.list_folders(path_string)
 
     local File = require "obs.utils.file"
     local file = File:new(path_string)
-    local plenary_file = file:as_plenary()
 
-    if not plenary_file:exists() then
+    if not file:exists() then
         error("path '" .. path_string .. "' must exist")
     end
-    if not plenary_file:is_dir() then
+    if not file:is_dir() then
         error(
             "path '" .. path_string .. "' must point to directory, not a file"
         )
@@ -258,13 +263,10 @@ function M.list_folders(path_string)
         file:path(),
     }
 
-    -- TODO: Replace with plenary scandir.
-    -- somehow it didn't workout, tests were failing.
-    -- I guess I was misusing the API.
     local files = file.list(path_string, "**/*")
 
     for _, found_file in ipairs(files) do
-        if found_file:as_plenary():is_dir() then
+        if found_file:is_dir() then
             result[#result + 1] = found_file:path()
         end
     end

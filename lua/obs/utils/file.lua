@@ -1,11 +1,11 @@
 local utils = require "obs.utils"
-local Path = require "plenary.path"
+local Path = require "obs.utils.path"
 
 ---Simple file wrapper
 ---TODO: Tests.
 --
 ---@class obs.utils.File
----@field private _plenary_path Path
+---@field private _path obs.utils.Path
 local File = {}
 File.__index = File
 
@@ -48,7 +48,7 @@ end
 ---returns path to a file
 ---@return string?
 function File:path()
-    return self._plenary_path:expand()
+    return self._path:expand()
 end
 
 --- lists files from path matching glob pattern
@@ -56,7 +56,6 @@ end
 ---@param glob string
 ---@return obs.utils.File[]
 function File.list(path, glob)
-    -- NOTE: Speed this up a bit. Maybe I should use `plenary.scandir`.
     local files_as_text = vim.fn.globpath(path, glob)
     local files_pathes = utils.string_split(files_as_text, "\n")
     local results = utils.array_map(files_pathes, function(file_path)
@@ -66,24 +65,62 @@ function File.list(path, glob)
 end
 
 --- creates file wrapper
----@param path string
+---@param path string|obs.utils.Path
 ---@return obs.utils.File
 function File:new(path)
     return setmetatable({
-        _plenary_path = Path:new(path),
+        _path = Path:new(path),
     }, self)
 end
 
----return plenary object
----@return Path
-function File:as_plenary()
-    return self._plenary_path
+---@return boolean
+function File:exists()
+    return self._path:exists()
+end
+
+---@return boolean
+function File:is_dir()
+    return self._path:is_dir()
+end
+
+---@return boolean
+function File:touch()
+    return self._path:touch()
+end
+
+---@return boolean
+function File:mkdir()
+    return self._path:mkdir()
 end
 
 ---Reads file content as string
 ---@return string?
 function File:read()
-    return self._plenary_path:read()
+    return self._path:read()
+end
+
+---@param content string
+---@param mode string?
+---@return boolean
+function File:write(content, mode)
+    return self._path:write(content, mode)
+end
+
+---@param destination string
+---@return boolean
+function File:copy(destination)
+    return self._path:copy { destination = destination }
+end
+
+---@return boolean
+function File:rm()
+    return self._path:rm()
+end
+
+---@param root string|obs.utils.Path?
+---@return string
+function File:make_relative(root)
+    return self._path:make_relative(root)
 end
 
 ---Opens file in buffer for editing
@@ -97,9 +134,9 @@ end
 ---@param new_name string name of the file
 ---@return boolean
 function File:change_name(new_name)
-    local parent = self._plenary_path:parent()
+    local parent = self._path:parent()
     local new_file_path = parent / new_name
-    self._plenary_path:rename { new_name = new_file_path:expand() }
+    return self._path:rename { new_name = new_file_path:expand() }
 end
 
 return File

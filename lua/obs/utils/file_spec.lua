@@ -1,5 +1,4 @@
 ---@module "luassert"
----@module "plenary.busted"
 
 local spec = require "obs.utils.spec"
 local File = require "obs.utils.file"
@@ -11,7 +10,7 @@ describe("change file name", function()
     ---@param name string
     ---@return obs.utils.File
     local function resolve_file_with_name(name)
-        ---@type Path
+        ---@type obs.utils.Path
         local file_path = dir_fixture.path / name
         return File:new(file_path:expand())
     end
@@ -21,7 +20,7 @@ describe("change file name", function()
     ---@return obs.utils.File
     local function create_file_with_name(name)
         local file = resolve_file_with_name(name)
-        file:as_plenary():touch()
+        file:touch()
         return file
     end
 

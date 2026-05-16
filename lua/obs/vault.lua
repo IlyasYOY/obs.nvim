@@ -2,7 +2,7 @@ local Link = require "obs.link"
 local Templater = require "obs.templater"
 local File = require "obs.utils.file"
 local Journal = require "obs.journal"
-local Path = require "plenary.path"
+local Path = require "obs.utils.path"
 
 local core = require "obs.utils"
 local utils = require "obs.utils"
@@ -36,8 +36,9 @@ function VaultOpts:new(opts)
 
     vault_opts.time_provider = opts.time_provider or os.time
 
-    vault_opts.vault_home = opts.vault_home
-        or (Path:new(Path.path.home) / "vimwiki"):expand()
+    vault_opts.vault_home = expand_path(
+        opts.vault_home or (Path:new(Path.path.home) / "vimwiki"):expand()
+    )
     vault_opts.vault_name = opts.vault_name or "vimwiki"
 
     vault_opts.templates_home = (
@@ -54,23 +55,20 @@ function VaultOpts:new(opts)
         { home = vault_opts.templates_home, include_default_providers = true },
         templater_opts
     )
+    vault_opts.templater.home = expand_path(vault_opts.templater.home)
 
     local journal_opts = opts.journal or {}
     vault_opts.journal = vim.tbl_extend("force", {
         home = vault_opts.journal_home,
     }, journal_opts)
-
-    vault_opts.vault_home = expand_path(opts.vault_home)
-    journal_opts.home = expand_path(journal_opts.home)
-    templater_opts.home = expand_path(templater_opts.home)
+    vault_opts.journal.home = expand_path(vault_opts.journal.home)
 
     return vault_opts
 end
 
 ---@class obs.Vault
 ---@field protected _name string
----@field protected _templates_path Path
----@field protected _home_path Path
+---@field protected _home_path obs.utils.Path
 ---@field protected _templater obs.Templater
 ---@field protected _journal obs.Journal
 ---@field protected _time_provider fun(): number
@@ -88,7 +86,7 @@ function Vault:new(opts)
     opts = VaultOpts:new(opts)
 
     vault._name = opts.vault_name
-    ---@type Path
+    ---@type obs.utils.Path
     vault._home_path = Path:new(vim.fn.resolve(opts.vault_home))
     ---@type obs.Templater
     local templater = Templater:new(opts.templater)
@@ -115,7 +113,7 @@ function Vault:create_note(name)
         return nil
     end
 
-    ---@type Path
+    ---@type obs.utils.Path
     local new_path = self._home_path / (fullname .. ".md")
     new_path:touch()
     return File:new(new_path:expand())
@@ -135,17 +133,16 @@ function Vault:find_directory_and_move_current_note()
         prompt = "Move note to folder",
         format_item = function(folder_path)
             local file = File:new(folder_path)
-            return file:as_plenary():make_relative()
+            return file:make_relative()
         end,
     }, function(choice)
         if choice then
-            local destination = File:new(choice):as_plenary()
-                / current_note_filename
+            local destination = Path:new(choice) / current_note_filename
             local from_file = File:new(current_note_fullpath)
-            from_file:as_plenary():copy { destination = destination:expand() }
+            from_file:copy(destination:expand())
             vim.cmd(current_buf .. "bdelete")
             File:new(destination:expand()):edit()
-            from_file:as_plenary():rm()
+            from_file:rm()
         end
     end)
 end
@@ -176,8 +173,7 @@ end
 function Vault:get_obsidian_link_to_current_note()
     return self:run_if_note(function()
         local current_note = File:new(core.current_working_file())
-        local file_name =
-            current_note:as_plenary():make_relative(self._home_path:expand())
+        local file_name = current_note:make_relative(self._home_path:expand())
 
         return "obsidian://open?vault="
             .. utils.urlencode(self._name)
@@ -272,7 +268,7 @@ function Vault:_update_links_in_notes(old_note_name, new_note_name)
             links_counter = links_counter + full_updated_counter
         end
 
-        note:as_plenary():write(note_text, "w")
+        note:write(note_text, "w")
     end
 
     vim.notify(
