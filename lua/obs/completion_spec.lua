@@ -4,6 +4,7 @@ local Vault = require "obs.vault"
 local spec = require "obs.utils.spec"
 
 local default_complete = ".,w,b,u,t"
+local completion_supported = vim.fn.has "nvim-0.12" == 1
 
 local function completion_fixture()
     local result = {}
@@ -103,7 +104,7 @@ describe("completion items", function()
 
         local start_col = Completion.completefunc(1, "")
 
-        assert.are.equal(2, start_col)
+        assert.are.equal(completion_supported and 2 or -3, start_col)
     end)
 
     it("returns matching note names without brackets", function()
@@ -116,9 +117,13 @@ describe("completion items", function()
 
         local result = Completion.completefunc(0, "ap")
 
-        assert.list_size(result.words, 2)
-        assert.are.equal("apple", result.words[1].word)
-        assert.are.equal("apricot", result.words[2].word)
+        if completion_supported then
+            assert.list_size(result.words, 2)
+            assert.are.equal("apple", result.words[1].word)
+            assert.are.equal("apricot", result.words[2].word)
+        else
+            assert.list_size(result.words, 0)
+        end
         assert.are.equal("always", result.refresh)
     end)
 
@@ -144,10 +149,16 @@ describe("completion items", function()
 
         local start_col = Completion.completefunc(1, "")
         local result = Completion.completefunc(0, "foo")
+
+        if not completion_supported then
+            assert.are.equal(-3, start_col)
+            assert.list_size(result.words, 0)
+            return
+        end
+
         local applied = string.sub(line, 1, start_col)
             .. result.words[1].word
             .. string.sub(line, cursor_col + 1)
-
         assert.are.equal("foobar", result.words[1].word)
         assert.are.equal("[[foobar]]", applied)
     end)
@@ -170,13 +181,19 @@ describe("completion attach", function()
         Completion.setup(state.vault)
         Completion.attach()
 
-        assert.are.equal(1, complete_source_count())
+        assert.are.equal(
+            completion_supported and 1 or 0,
+            complete_source_count()
+        )
     end)
 
     it("sets empty completefunc", function()
         Completion.setup(state.vault)
 
-        assert.are.equal(Completion.completefunc_option, vim.bo.completefunc)
+        assert.are.equal(
+            completion_supported and Completion.completefunc_option or "",
+            vim.bo.completefunc
+        )
     end)
 
     it("does not overwrite user completefunc", function()

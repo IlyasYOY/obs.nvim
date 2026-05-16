@@ -4,6 +4,7 @@ local M = {}
 
 local augroup_name = "ObsNvimCompletion"
 local completefunc_name = "obs_nvim_completefunc"
+local minimum_version = "nvim-0.12"
 
 _G[completefunc_name] = function(findstart, base)
     return require("obs.completion").completefunc(findstart, base)
@@ -64,6 +65,11 @@ local function is_obs_completefunc(value)
     return value == M.completefunc_option
         or string.find(value, "obs.completion", 1, true) ~= nil
         or string.find(value, completefunc_name, 1, true) ~= nil
+end
+
+---@return boolean
+local function is_supported()
+    return vim.fn.has(minimum_version) == 1
 end
 
 ---@param vault obs.Vault?
@@ -210,6 +216,7 @@ end
 
 function M.disable()
     M._enabled = false
+    M._vault = nil
     pcall(vim.api.nvim_del_augroup_by_name, augroup_name)
 end
 
@@ -218,6 +225,10 @@ end
 function M.setup(vault, opts)
     opts = opts or {}
     M.disable()
+
+    if not is_supported() then
+        return
+    end
 
     M._vault = vault
     M._enabled = opts.enabled ~= false

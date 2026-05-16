@@ -80,8 +80,9 @@ Daily notes use `journal.daily_template_name`. Weekly notes use
 `journal.weekly_template_name`. The older `journal.template_name` option still
 works as a deprecated alias for the daily template.
 
-Wiki link completion is enabled by default for Markdown notes inside the vault.
-It completes note names inside `[[...]]` with Neovim's built-in completion:
+Wiki link completion requires Neovim 0.12 or newer and is enabled by default
+for Markdown notes inside the vault. It completes note names inside `[[...]]`
+with Neovim's built-in completion:
 
 - use `CTRL-X CTRL-U` to trigger it manually
 - set `vim.opt.autocomplete = true` in your config for Neovim's built-in
