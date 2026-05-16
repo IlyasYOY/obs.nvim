@@ -63,7 +63,7 @@ return {
 ## Configuration
 
 My configuration is
-[here](https://github.com/IlyasYOY/dotfiles/blob/master/config/nvim/lua/plugins/obs-nvim.lua).
+[here](https://github.com/IlyasYOY/dotfiles/blob/master/config/nvim/after/plugin/obs.lua).
 
 `obs.setup()` accepts `obs.VaultOpts`, defined in
 [`lua/obs/vault.lua`](https://github.com/IlyasYOY/obs.nvim/blob/main/lua/obs/vault.lua).
