@@ -1,11 +1,14 @@
+local Completion = require "obs.completion"
 local Vault = require "obs.vault"
 
 local obs = {}
 
 ---This functions creates module filesds that hold API tables.
----@param opts obs.VaultOpts
+---@param opts obs.VaultOpts?
 function obs.setup(opts)
+    opts = opts or {}
     obs.vault = Vault:new(opts)
+    Completion.setup(obs.vault, opts.completion)
 end
 
 vim.api.nvim_create_user_command("ObsNvimTemplate", function()

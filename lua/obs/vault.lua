@@ -13,6 +13,7 @@ local utils = require "obs.utils"
 ---@field public vault_name string?
 ---@field public templater obs.TemplaterOpts?
 ---@field public journal obs.JournalOpts?
+---@field public completion obs.CompletionOpts?
 ---@field public time_provider fun():number
 local VaultOpts = {}
 
