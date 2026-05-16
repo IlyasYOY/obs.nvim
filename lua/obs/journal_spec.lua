@@ -192,6 +192,35 @@ describe("journal", function()
             assert.is_true(path:exists(), "file was not created")
         end)
 
+        it("creates missing nested journal directory", function()
+            local journal_home =
+                test_state.journal_dir_path.path / "missing" / "diary"
+            test_state.journal = Journal:new(test_state.templater, {
+                home = journal_home:expand(),
+                date_provider = function()
+                    return "2024-02-14"
+                end,
+            })
+
+            assert.is_false(
+                journal_home:exists(),
+                "journal directory already exists"
+            )
+
+            local result = test_state.journal:today(true)
+            local expected_path = journal_home / "2024-02-14.md"
+
+            assert.is_true(
+                journal_home:exists(),
+                "journal directory was not created"
+            )
+            assert.is_true(
+                expected_path:exists(),
+                "daily note was not created"
+            )
+            assert.are.equal(expected_path:expand(), result:path())
+        end)
+
         it("create matching template", function()
             test_state.copy_with_opts {
                 date_provider = function()
