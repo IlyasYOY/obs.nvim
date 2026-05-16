@@ -182,10 +182,28 @@ function Vault:get_obsidian_link_to_current_note()
     end)
 end
 
+---Returns a wiki link to a current note
+---@return string?
+function Vault:get_wiki_link_to_current_note()
+    return self:run_if_note(function()
+        local current_note = File:new(core.current_working_file())
+        return "[[" .. current_note:name() .. "]]"
+    end)
+end
+
 ---Copies a link to a current note
 ---@return string
 function Vault:copy_obsidian_link_to_current_note()
     local link = self:get_obsidian_link_to_current_note()
+    if link then
+        vim.notify("link was saved to clipboard: " .. link)
+        core.save_to_exchange_buffer(link)
+    end
+end
+
+---Copies a wiki link to a current note
+function Vault:copy_wiki_link_to_current_note()
+    local link = self:get_wiki_link_to_current_note()
     if link then
         vim.notify("link was saved to clipboard: " .. link)
         core.save_to_exchange_buffer(link)

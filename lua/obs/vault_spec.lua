@@ -1,6 +1,7 @@
 local Vault = require "obs.vault"
 local spec = require "obs.utils.spec"
 local File = require "obs.utils.file"
+local utils = require "obs.utils"
 
 local function vault_fixture()
     local result = {}
@@ -224,6 +225,57 @@ describe("list", function()
         local notes = state.vault:list_notes()
 
         assert.list_size(notes, 0)
+    end)
+end)
+
+describe("copy current note link", function()
+    local state = vault_fixture()
+    local original_save_to_exchange_buffer
+
+    local function edit_note(note)
+        vim.cmd("edit " .. vim.fn.fnameescape(note:path()))
+        vim.bo.filetype = "markdown"
+    end
+
+    before_each(function()
+        original_save_to_exchange_buffer = utils.save_to_exchange_buffer
+    end)
+
+    after_each(function()
+        utils.save_to_exchange_buffer = original_save_to_exchange_buffer
+        vim.cmd "enew!"
+    end)
+
+    it("returns wiki link for current note", function()
+        local note = state.create_file "my note.md"
+        edit_note(note)
+
+        local link = state.vault:get_wiki_link_to_current_note()
+
+        assert.are.equal("[[my note]]", link)
+    end)
+
+    it("copies wiki link for current note", function()
+        local note = state.create_file "my note.md"
+        local saved_link
+        utils.save_to_exchange_buffer = function(link)
+            saved_link = link
+        end
+        edit_note(note)
+
+        state.vault:copy_wiki_link_to_current_note()
+
+        assert.are.equal("[[my note]]", saved_link)
+    end)
+
+    it("does not return wiki link outside note buffers", function()
+        local note = state.create_file "my note.md"
+        edit_note(note)
+        vim.bo.filetype = "text"
+
+        local link = state.vault:get_wiki_link_to_current_note()
+
+        assert.is_nil(link)
     end)
 end)
 

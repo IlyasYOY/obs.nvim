@@ -31,6 +31,12 @@ end, {
     desc = "Copies obsidian link to note",
 })
 
+vim.api.nvim_create_user_command("ObsNvimCopyWikiLinkToNote", function()
+    obs.vault:copy_wiki_link_to_current_note()
+end, {
+    desc = "Copies wiki link to note",
+})
+
 vim.api.nvim_create_user_command("ObsNvimOpenInObsidian", function()
     obs.vault:open_obsidian_link_to_current_note()
 end, {

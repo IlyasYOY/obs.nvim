@@ -2,6 +2,7 @@ local EXPECTED_COMMANDS = {
     "ObsNvimTemplate",
     "ObsNvimRandomNote",
     "ObsNvimCopyObsidianLinkToNote",
+    "ObsNvimCopyWikiLinkToNote",
     "ObsNvimOpenInObsidian",
     "ObsNvimFollowLink",
     "ObsNvimNewNote",

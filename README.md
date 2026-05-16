@@ -10,7 +10,7 @@ note workflows:
 - create daily and weekly journal notes
 - insert Markdown templates
 - rename, move, and inspect backlinks for notes
-- copy or open Obsidian links for the current note
+- copy wiki or Obsidian links for the current note
 
 ## Installation
 
@@ -47,6 +47,7 @@ return {
             vim.keymap.set("n", "<leader>nr", "<cmd>ObsNvimRandomNote<cr>")
             vim.keymap.set("n", "<leader>nN", "<cmd>ObsNvimNewNote<cr>")
             vim.keymap.set("n", "<leader>ny", "<cmd>ObsNvimCopyObsidianLinkToNote<cr>")
+            vim.keymap.set("n", "<leader>nY", "<cmd>ObsNvimCopyWikiLinkToNote<cr>")
             vim.keymap.set("n", "<leader>no", "<cmd>ObsNvimOpenInObsidian<cr>")
             vim.keymap.set("n", "<leader>nd", "<cmd>ObsNvimDailyNote<cr>")
             vim.keymap.set("n", "<leader>nw", "<cmd>ObsNvimWeeklyNote<cr>")
@@ -113,6 +114,7 @@ You can add custom variables with `templater.extra_providers`.
 | `:ObsNvimRename` | Rename the current note and update matching wiki links. |
 | `:ObsNvimMove` | Select a vault directory and move the current note there. |
 | `:ObsNvimCopyObsidianLinkToNote` | Copy an Obsidian URL for the current note. |
+| `:ObsNvimCopyWikiLinkToNote` | Copy a `[[wiki link]]` for the current note. |
 | `:ObsNvimOpenInObsidian` | Open the current note in Obsidian. |
 
 Most commands that act on the current buffer require the file to be a Markdown
