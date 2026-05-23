@@ -97,6 +97,23 @@ describe("new note", function()
     end)
 end)
 
+describe("daily note completion", function()
+    local state = vault_fixture()
+
+    it("completes existing daily dates", function()
+        local first_note = state.home / "diary" / "2024-02-14.md"
+        local second_note = state.home / "diary" / "2024-02-15.md"
+        local third_note = state.home / "diary" / "2024-03-01.md"
+        first_note:touch {}
+        second_note:touch {}
+        third_note:touch {}
+
+        local result = state.vault:complete_daily_dates "2024-02"
+
+        assert.same({ "2024-02-14", "2024-02-15" }, result)
+    end)
+end)
+
 describe("find backlinks", function()
     local state = vault_fixture()
 

@@ -393,6 +393,12 @@ function Vault:open_daily(date_query)
     self._journal:open_daily()
 end
 
+---@param prefix string?
+---@return string[]
+function Vault:complete_daily_dates(prefix)
+    return self._journal:complete_daily_dates(prefix)
+end
+
 --- Opens weekly note to be edited
 function Vault:open_weekly()
     self._journal:open_weekly()

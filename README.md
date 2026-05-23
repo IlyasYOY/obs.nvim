@@ -108,7 +108,7 @@ You can add custom variables with `templater.extra_providers`.
 | `:ObsNvimFollowLink` | Follow the `[[wiki link]]` under the cursor. |
 | `:ObsNvimRandomNote` | Open a random note from the vault. |
 | `:ObsNvimNewNote` | Create a note prefixed with `YYYY-MM-DD-`; empty names use the current timestamp. |
-| `:ObsNvimDailyNote [date]` | Open a daily note, creating it if needed. Supports `YYYY-MM-DD`, `today`, `tomorrow`, `yesterday`, `N days ago`, and `in N days`; no argument opens today. |
+| `:ObsNvimDailyNote [date]` | Open a daily note, creating it if needed. Supports `YYYY-MM-DD`, `today`, `tomorrow`, `yesterday`, `N days ago`, and `in N days`; no argument opens today. Tab completes existing daily dates. |
 | `:ObsNvimWeeklyNote` | Open this week's weekly note, creating it if needed. |
 | `:ObsNvimBacklinks` | Select from notes that link to the current note. |
 | `:ObsNvimRename` | Rename the current note and update matching wiki links. |

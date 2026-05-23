@@ -178,6 +178,23 @@ function Journal:list_dailies()
     return files
 end
 
+---@param prefix string?
+---@return string[]
+function Journal:complete_daily_dates(prefix)
+    prefix = prefix or ""
+
+    local results = {}
+    for _, file in ipairs(self:list_dailies()) do
+        local name = file:name()
+        if name and string.find(name, prefix, 1, true) == 1 then
+            results[#results + 1] = name
+        end
+    end
+
+    table.sort(results)
+    return results
+end
+
 -- lists journal weekly entries
 ---@return Array<obs.utils.File>
 function Journal:list_weeklies()

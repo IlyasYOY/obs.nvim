@@ -12,6 +12,22 @@ describe("commands", function()
             assert.are.equal("*", command.nargs)
         end)
 
+        it("completes daily dates through the vault", function()
+            local received_prefix
+            obs.vault = {
+                complete_daily_dates = function(_, prefix)
+                    received_prefix = prefix
+                    return { "2024-02-14" }
+                end,
+            }
+
+            local result =
+                vim.fn.getcompletion("ObsNvimDailyNote 2024-02", "cmdline")
+
+            assert.are.equal("2024-02", received_prefix)
+            assert.same({ "2024-02-14" }, result)
+        end)
+
         it("opens today's daily note without arguments", function()
             local received_query
             obs.vault = {

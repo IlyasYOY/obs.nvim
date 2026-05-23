@@ -69,6 +69,13 @@ end, {
 vim.api.nvim_create_user_command("ObsNvimDailyNote", function(args)
     obs.vault:open_daily(args.args)
 end, {
+    complete = function(arg_lead)
+        if not obs.vault then
+            return {}
+        end
+
+        return obs.vault:complete_daily_dates(arg_lead)
+    end,
     desc = "Opens daily note",
     nargs = "*",
 })
