@@ -60,6 +60,7 @@ function VaultOpts:new(opts)
     local journal_opts = opts.journal or {}
     vault_opts.journal = vim.tbl_extend("force", {
         home = vault_opts.journal_home,
+        time_provider = vault_opts.time_provider,
     }, journal_opts)
     vault_opts.journal.home = expand_path(vault_opts.journal.home)
 
@@ -382,7 +383,13 @@ function Vault:get_note(name)
 end
 
 --- Opens daily note to be edited
-function Vault:open_daily()
+---@param date_query string?
+---@return boolean?
+function Vault:open_daily(date_query)
+    if date_query and date_query ~= "" then
+        return self._journal:open_daily_for(date_query)
+    end
+
     self._journal:open_daily()
 end
 

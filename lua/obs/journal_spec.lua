@@ -25,6 +25,7 @@ local function journal_fixture()
             result.journal = Journal:new(templater, {
                 home = journal_dir_path.path:expand(),
                 date_provider = opts.date_provider,
+                time_provider = opts.time_provider,
                 week_provider = opts.week_provider,
                 daily_template_name = opts.daily_template_name,
                 template_name = opts.template_name,
@@ -42,6 +43,15 @@ end
 
 describe("journal", function()
     local test_state = journal_fixture()
+
+    local function time_for(year, month, day)
+        return os.time {
+            year = year,
+            month = month,
+            day = day,
+            hour = 12,
+        }
+    end
 
     describe("weekly", function()
         it("get", function()
@@ -146,6 +156,30 @@ describe("journal", function()
     end)
 
     describe("today", function()
+        it("uses time provider by default", function()
+            test_state.copy_with_opts {
+                time_provider = function()
+                    return time_for(2024, 2, 14)
+                end,
+            }
+
+            local result = test_state.journal:today()
+
+            assert.are.equal("2024-02-14", result:name(), "file name is wrong")
+        end)
+
+        it("uses custom date provider as a filename", function()
+            test_state.copy_with_opts {
+                date_provider = function()
+                    return "custom-day"
+                end,
+            }
+
+            local result = test_state.journal:today()
+
+            assert.are.equal("custom-day", result:name(), "file name is wrong")
+        end)
+
         it("get", function()
             test_state.copy_with_opts {
                 date_provider = function()
@@ -283,6 +317,121 @@ describe("journal", function()
                     resulting_text
                 )
             )
+        end)
+    end)
+
+    describe("daily for date", function()
+        it("gets exact date note", function()
+            local result = test_state.journal:daily_for "2024-02-14"
+
+            assert.are.equal("2024-02-14", result:name(), "file name is wrong")
+            assert.is_true(
+                core.string_has_suffix(result:path(), ".md"),
+                "file type is wrong"
+            )
+        end)
+
+        it("get and create file", function()
+            local result = test_state.journal:daily_for("2024-02-14", true)
+
+            ---@type obs.utils.Path
+            local path = Path:new(result:path())
+
+            assert.is_true(path:exists(), "file was not created")
+        end)
+
+        it("create matching template", function()
+            test_state.copy_with_opts {
+                daily_template_name = "daily",
+            }
+
+            ---@type obs.utils.Path
+            local daily_file_template = Path:new(
+                test_state.templates_dir_path.path
+            ) / "daily.md"
+
+            local expected_text = "this is example template 2024-02-14"
+            daily_file_template:write(expected_text, "w")
+
+            local result = test_state.journal:daily_for("2024-02-14", true)
+
+            ---@type obs.utils.Path
+            local path = Path:new(result:path())
+            local resulting_text = path:read()
+
+            assert.are.equal(
+                resulting_text,
+                expected_text,
+                string.format(
+                    "Expected mathing template '%s' but was '%s'",
+                    expected_text,
+                    resulting_text
+                )
+            )
+        end)
+
+        it("parses keywords", function()
+            test_state.copy_with_opts {
+                date_provider = function()
+                    return "2024-02-14"
+                end,
+                time_provider = function()
+                    return time_for(2024, 2, 14)
+                end,
+            }
+
+            assert.are.equal(
+                "2024-02-14",
+                test_state.journal:parse_daily_date "today"
+            )
+            assert.are.equal(
+                "2024-02-15",
+                test_state.journal:parse_daily_date "tomorrow"
+            )
+            assert.are.equal(
+                "2024-02-13",
+                test_state.journal:parse_daily_date "yesterday"
+            )
+        end)
+
+        it("parses relative days", function()
+            test_state.copy_with_opts {
+                time_provider = function()
+                    return time_for(2024, 2, 14)
+                end,
+            }
+
+            assert.are.equal(
+                "2024-02-13",
+                test_state.journal:parse_daily_date "1 day ago"
+            )
+            assert.are.equal(
+                "2024-02-12",
+                test_state.journal:parse_daily_date "2 days ago"
+            )
+            assert.are.equal(
+                "2024-02-15",
+                test_state.journal:parse_daily_date "in 1 day"
+            )
+            assert.are.equal(
+                "2024-02-16",
+                test_state.journal:parse_daily_date "in 2 days"
+            )
+        end)
+
+        it("rejects invalid exact date", function()
+            local result = test_state.journal:daily_for("2024-02-30", true)
+            local invalid_path = test_state.journal_dir_path.path
+                / "2024-02-30.md"
+
+            assert.is_nil(result)
+            assert.is_false(invalid_path:exists(), "invalid file was created")
+        end)
+
+        it("rejects unsupported date text", function()
+            local result = test_state.journal:daily_for("last friday", true)
+
+            assert.is_nil(result)
         end)
     end)
 

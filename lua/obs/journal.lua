@@ -9,6 +9,7 @@ local File = require "obs.utils.file"
 ---@field public weekly_template_name string
 ---@field public date_glob string the glob pattern used to list daily notes
 ---@field public date_provider? fun():string
+---@field public time_provider? fun():number
 ---@field public week_glob string the glob pattern used to list weekly notes
 ---@field public week_provider? fun():string
 
@@ -17,6 +18,7 @@ local File = require "obs.utils.file"
 ---@field private _templater obs.Templater templater generator
 ---@field private _date_glob string the glob pattern used to list daily notes
 ---@field private _date_provider fun(): string the result is used as a file name to the day entry
+---@field private _time_provider fun(): number
 ---@field private _week_glob string the glob pattern used to list weekly notes
 ---@field private _week_provider fun(): string the result is used as a file name to the week entry
 ---@field protected _home_path obs.utils.Path home location for daily notes
@@ -39,9 +41,10 @@ function Journal:new(templater, opts)
         or opts.template_name
     journal._weekly_template_name = opts.weekly_template_name
     journal._date_glob = opts.date_glob or "????-??-??"
+    journal._time_provider = opts.time_provider or os.time
     journal._date_provider = opts.date_provider
         or function()
-            return os.date "%Y-%m-%d"
+            return os.date("%Y-%m-%d", journal._time_provider())
         end
     journal._week_glob = opts.week_glob or "????-W??"
     journal._week_provider = opts.week_provider
@@ -52,10 +55,111 @@ function Journal:new(templater, opts)
     return journal
 end
 
+---@param time number
+---@return string
+local function format_date(time)
+    return os.date("%Y-%m-%d", time)
+end
+
+---@param year number
+---@param month number
+---@param day number
+---@return number?
+local function validated_date_time(year, month, day)
+    local time = os.time {
+        year = year,
+        month = month,
+        day = day,
+        hour = 12,
+    }
+    if not time then
+        return nil
+    end
+
+    local date = os.date("*t", time)
+    if date.year ~= year or date.month ~= month or date.day ~= day then
+        return nil
+    end
+
+    return time
+end
+
+---@param base_time number
+---@param offset_days number
+---@return string
+local function format_relative_date(base_time, offset_days)
+    local base_date = os.date("*t", base_time)
+    local time = os.time {
+        year = base_date.year,
+        month = base_date.month,
+        day = base_date.day + offset_days,
+        hour = 12,
+    }
+    return format_date(time)
+end
+
+---@param value string?
+---@return string?
+function Journal:parse_daily_date(value)
+    if not value or value == "" then
+        return self._date_provider()
+    end
+
+    local normalized = vim.trim(value):lower()
+    if normalized == "" or normalized == "today" then
+        return self._date_provider()
+    end
+    if normalized == "tomorrow" then
+        return format_relative_date(self._time_provider(), 1)
+    end
+    if normalized == "yesterday" then
+        return format_relative_date(self._time_provider(), -1)
+    end
+
+    local year, month, day = normalized:match "^(%d%d%d%d)%-(%d%d)%-(%d%d)$"
+    if year then
+        local time =
+            validated_date_time(tonumber(year), tonumber(month), tonumber(day))
+        if time then
+            return format_date(time)
+        end
+        return nil
+    end
+
+    local past_days = normalized:match "^(%d+)%s+days?%s+ago$"
+    if past_days then
+        return format_relative_date(self._time_provider(), -tonumber(past_days))
+    end
+
+    local future_days = normalized:match "^in%s+(%d+)%s+days?$"
+    if future_days then
+        return format_relative_date(
+            self._time_provider(),
+            tonumber(future_days)
+        )
+    end
+
+    return nil
+end
+
 ---opens daily note to be edited
 function Journal:open_daily()
     local daily_note = self:today(true)
     daily_note:edit()
+end
+
+---opens daily note for a date query to be edited
+---@param date_query string?
+---@return boolean
+function Journal:open_daily_for(date_query)
+    local daily_note = self:daily_for(date_query, true)
+    if not daily_note then
+        vim.notify("Invalid daily note date: " .. tostring(date_query))
+        return false
+    end
+
+    daily_note:edit()
+    return true
 end
 
 ---opens weekly note to be edited
@@ -86,7 +190,26 @@ end
 ---@param create_if_missing boolean?
 ---@return obs.utils.File
 function Journal:today(create_if_missing)
-    local filename = self._date_provider()
+    return self:_daily_by_filename(self._date_provider(), create_if_missing)
+end
+
+-- get daily note file for a date query
+---@param date_query string?
+---@param create_if_missing boolean?
+---@return obs.utils.File?
+function Journal:daily_for(date_query, create_if_missing)
+    local filename = self:parse_daily_date(date_query)
+    if not filename then
+        return nil
+    end
+
+    return self:_daily_by_filename(filename, create_if_missing)
+end
+
+---@param filename string
+---@param create_if_missing boolean?
+---@return obs.utils.File
+function Journal:_daily_by_filename(filename, create_if_missing)
     ---@type obs.utils.Path
     local path = self._home_path / (filename .. ".md")
 

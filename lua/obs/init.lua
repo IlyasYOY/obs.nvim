@@ -66,10 +66,11 @@ end, {
     desc = "Creates new Note",
 })
 
-vim.api.nvim_create_user_command("ObsNvimDailyNote", function()
-    obs.vault:open_daily()
+vim.api.nvim_create_user_command("ObsNvimDailyNote", function(args)
+    obs.vault:open_daily(args.args)
 end, {
     desc = "Opens daily note",
+    nargs = "*",
 })
 
 vim.api.nvim_create_user_command("ObsNvimWeeklyNote", function()
