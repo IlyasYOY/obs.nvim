@@ -178,20 +178,32 @@ function Journal:list_dailies()
     return files
 end
 
+---@return string[]
+function Journal:list_daily_dates()
+    local results = {}
+    for _, file in ipairs(self:list_dailies()) do
+        local name = file:name()
+        if name then
+            results[#results + 1] = name
+        end
+    end
+
+    table.sort(results)
+    return results
+end
+
 ---@param prefix string?
 ---@return string[]
 function Journal:complete_daily_dates(prefix)
     prefix = prefix or ""
 
     local results = {}
-    for _, file in ipairs(self:list_dailies()) do
-        local name = file:name()
+    for _, name in ipairs(self:list_daily_dates()) do
         if name and string.find(name, prefix, 1, true) == 1 then
             results[#results + 1] = name
         end
     end
 
-    table.sort(results)
     return results
 end
 

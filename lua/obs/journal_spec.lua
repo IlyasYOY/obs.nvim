@@ -459,6 +459,36 @@ describe("journal", function()
     describe("complete daily dates", function()
         local state = journal_fixture()
 
+        it("lists sorted daily dates", function()
+            local first_note = state.journal_dir_path.path / "2024-02-14.md"
+            local second_note = state.journal_dir_path.path / "2023-12-31.md"
+            local third_note = state.journal_dir_path.path / "2024-01-01.md"
+            first_note:touch {}
+            second_note:touch {}
+            third_note:touch {}
+
+            local result = state.journal:list_daily_dates()
+
+            assert.same({
+                "2023-12-31",
+                "2024-01-01",
+                "2024-02-14",
+            }, result)
+        end)
+
+        it("excludes non-daily files when listing daily dates", function()
+            local daily_note = state.journal_dir_path.path / "2024-02-14.md"
+            local weekly_note = state.journal_dir_path.path / "2024-W07.md"
+            local normal_note = state.journal_dir_path.path / "note.md"
+            daily_note:touch {}
+            weekly_note:touch {}
+            normal_note:touch {}
+
+            local result = state.journal:list_daily_dates()
+
+            assert.same({ "2024-02-14" }, result)
+        end)
+
         it("no entries", function()
             local result = state.journal:complete_daily_dates ""
 

@@ -100,6 +100,23 @@ end)
 describe("daily note completion", function()
     local state = vault_fixture()
 
+    it("parses daily date queries", function()
+        local result = state.vault:parse_daily_date "2024-02-14"
+
+        assert.are.equal("2024-02-14", result)
+    end)
+
+    it("lists existing daily dates", function()
+        local first_note = state.home / "diary" / "2024-02-14.md"
+        local second_note = state.home / "diary" / "2024-02-15.md"
+        first_note:touch {}
+        second_note:touch {}
+
+        local result = state.vault:list_daily_dates()
+
+        assert.same({ "2024-02-14", "2024-02-15" }, result)
+    end)
+
     it("completes existing daily dates", function()
         local first_note = state.home / "diary" / "2024-02-14.md"
         local second_note = state.home / "diary" / "2024-02-15.md"

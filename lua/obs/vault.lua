@@ -393,6 +393,17 @@ function Vault:open_daily(date_query)
     self._journal:open_daily()
 end
 
+---@param date_query string?
+---@return string?
+function Vault:parse_daily_date(date_query)
+    return self._journal:parse_daily_date(date_query)
+end
+
+---@return string[]
+function Vault:list_daily_dates()
+    return self._journal:list_daily_dates()
+end
+
 ---@param prefix string?
 ---@return string[]
 function Vault:complete_daily_dates(prefix)

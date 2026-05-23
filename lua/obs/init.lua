@@ -1,3 +1,4 @@
+local Calendar = require "obs.calendar"
 local Completion = require "obs.completion"
 local Vault = require "obs.vault"
 
@@ -110,8 +111,14 @@ vim.api.nvim_create_user_command("ObsNvimDailyNote", function(args)
         return
     end
 
+    if args.bang then
+        Calendar.open(obs.vault, date_query)
+        return
+    end
+
     obs.vault:open_daily(date_query)
 end, {
+    bang = true,
     complete = function(arg_lead)
         if not obs.vault then
             return {}

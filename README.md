@@ -108,7 +108,7 @@ You can add custom variables with `templater.extra_providers`.
 | `:ObsNvimFollowLink` | Follow the `[[wiki link]]` under the cursor. |
 | `:ObsNvimRandomNote` | Open a random note from the vault. |
 | `:ObsNvimNewNote` | Create a note prefixed with `YYYY-MM-DD-`; empty names use the current timestamp. |
-| `:ObsNvimDailyNote [date]` | Open a daily note, creating it if needed. Supports `YYYY-MM-DD`, `today`, `tomorrow`, `yesterday`, `N days ago`, and `in N days`; no argument opens today. Prefix with a count, such as `:10ObsNvimDailyNote`, or pass a number, such as `:ObsNvimDailyNote 10`, to open today + N days. Tab completes existing daily dates. |
+| `:ObsNvimDailyNote[!] [date]` | Open a daily note, creating it if needed. Supports `YYYY-MM-DD`, `today`, `tomorrow`, `yesterday`, `N days ago`, and `in N days`; no argument opens today. Prefix with a count, such as `:10ObsNvimDailyNote`, or pass a number, such as `:ObsNvimDailyNote 10`, to open today + N days. Add `!` to choose the date from a calendar popup. Tab completes existing daily dates. |
 | `:ObsNvimWeeklyNote` | Open this week's weekly note, creating it if needed. |
 | `:ObsNvimBacklinks` | Select from notes that link to the current note. |
 | `:ObsNvimRename` | Rename the current note and update matching wiki links. |
@@ -124,6 +124,11 @@ Normal-mode mappings like `<cmd>ObsNvimDailyNote<cr>` do not automatically pass
 `vim.v.count`. Use a function mapping if you want `10<leader>nd` to call
 `:10ObsNvimDailyNote`. Using both a count and date text shows a warning and
 does nothing.
+
+The daily-note calendar popup shows one month at a time. Existing daily notes
+are marked with `*`. Use `h`/`l` for previous/next day, `j`/`k` for
+previous/next week, `K`/`J` for previous/next month, `<CR>` to open the
+selected date, `q` or `<Esc>` to close, and `?` to toggle mapping help.
 
 ## Tips
 
