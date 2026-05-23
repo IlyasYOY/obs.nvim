@@ -8,6 +8,8 @@
 ---@field private _show_help boolean
 ---@field private _day_cells table<string, { line: number, col: number }>
 ---@field private _marked_dates table<string, boolean>
+---@field private _week_rows table<number, string>
+---@field private _marked_weeks table<number, boolean>
 local Calendar = {}
 Calendar.__index = Calendar
 
@@ -38,7 +40,9 @@ local weekday_cells = {
     "Su ",
 }
 
-local calendar_width = 27
+local day_grid_offset = 3
+local day_grid_width = 27
+local calendar_width = day_grid_offset + day_grid_width
 
 ---@param text string
 ---@param width number
@@ -103,6 +107,19 @@ end
 ---@param year number
 ---@param month number
 ---@param day number
+---@return number
+local function date_time(year, month, day)
+    return os.time {
+        year = year,
+        month = month,
+        day = day,
+        hour = 12,
+    }
+end
+
+---@param year number
+---@param month number
+---@param day number
 ---@return number, number, number
 local function normalized_date(year, month, day)
     local time = os.time {
@@ -113,6 +130,22 @@ local function normalized_date(year, month, day)
     }
     local date = os.date("*t", time)
     return date.year, date.month, date.day
+end
+
+---@param year number
+---@param month number
+---@param day number
+---@return string
+local function iso_week_id(year, month, day)
+    local monday_time = date_time(year, month, day)
+    local monday_date = os.date("*t", monday_time)
+    local thursday_time = os.time {
+        year = monday_date.year,
+        month = monday_date.month,
+        day = monday_date.day + 3,
+        hour = 12,
+    }
+    return os.date("%Y", thursday_time) .. "-W" .. os.date("%V", monday_time)
 end
 
 ---@param vault obs.Vault
@@ -130,6 +163,8 @@ function Calendar:new(vault, initial_date)
         _show_help = false,
         _day_cells = {},
         _marked_dates = {},
+        _week_rows = {},
+        _marked_weeks = {},
     }, self)
 end
 
@@ -153,6 +188,17 @@ function Calendar:selected_date()
     return format_date(self._year, self._month, self._day)
 end
 
+---@return string
+function Calendar:selected_week()
+    local selected_cell = self._day_cells[self:selected_date()]
+    if selected_cell and self._week_rows[selected_cell.line] then
+        return self._week_rows[selected_cell.line]
+    end
+
+    local column = weekday_column(self._year, self._month, self._day)
+    return iso_week_id(self._year, self._month, self._day - column + 1)
+end
+
 ---@return table<string, boolean>
 function Calendar:_existing_date_set()
     local existing_dates = {}
@@ -162,18 +208,30 @@ function Calendar:_existing_date_set()
     return existing_dates
 end
 
+---@return table<string, boolean>
+function Calendar:_existing_week_set()
+    local existing_weeks = {}
+    for _, week in ipairs(self._vault:list_weekly_dates()) do
+        existing_weeks[week] = true
+    end
+    return existing_weeks
+end
+
 ---@return string[]
 function Calendar:_lines()
     local existing_dates = self:_existing_date_set()
+    local existing_weeks = self:_existing_week_set()
     local lines = {
         center(
             month_names[self._month] .. " " .. tostring(self._year),
             calendar_width
         ),
-        table.concat(weekday_cells, " "),
+        "Wk " .. table.concat(weekday_cells, " "),
     }
     self._day_cells = {}
     self._marked_dates = {}
+    self._week_rows = {}
+    self._marked_weeks = {}
 
     local first_column = weekday_column(self._year, self._month, 1)
     local month_days = days_in_month(self._year, self._month)
@@ -181,6 +239,8 @@ function Calendar:_lines()
 
     for week = 1, 6 do
         local cells = {}
+        local week_monday = 2 - first_column + ((week - 1) * 7)
+        local week_id = iso_week_id(self._year, self._month, week_monday)
         for column = 1, 7 do
             if (week == 1 and column < first_column) or day > month_days then
                 cells[#cells + 1] = "   "
@@ -191,13 +251,19 @@ function Calendar:_lines()
                 cells[#cells + 1] = ("%2d%s"):format(day, marker)
                 self._day_cells[date] = {
                     line = #lines + 1,
-                    col = (column - 1) * 4,
+                    col = day_grid_offset + ((column - 1) * 4),
                 }
                 day = day + 1
             end
         end
 
-        lines[#lines + 1] = table.concat(cells, " ")
+        local line = #lines + 1
+        local week_marker = existing_weeks[week_id] and "*" or " "
+        self._week_rows[line] = week_id
+        self._marked_weeks[line] = existing_weeks[week_id] or false
+        lines[#lines + 1] = week_id:sub(-2)
+            .. week_marker
+            .. table.concat(cells, " ")
     end
 
     if self._show_help then
@@ -205,7 +271,7 @@ function Calendar:_lines()
         lines[#lines + 1] = "? mappings"
         lines[#lines + 1] = "h/l day    j/k week"
         lines[#lines + 1] = "J/K month  <CR> open"
-        lines[#lines + 1] = "q/Esc close"
+        lines[#lines + 1] = "w weekly   q/Esc close"
     end
 
     return lines
@@ -255,6 +321,19 @@ function Calendar:_highlight()
                 cell.line - 1,
                 cell.col + 2,
                 cell.col + 3
+            )
+        end
+    end
+
+    for line, marked in pairs(self._marked_weeks) do
+        if marked then
+            vim.api.nvim_buf_add_highlight(
+                self._buf,
+                ns,
+                "Special",
+                line - 1,
+                2,
+                3
             )
         end
     end
@@ -326,6 +405,9 @@ function Calendar:_map_keys()
     end, opts)
     vim.keymap.set("n", "<CR>", function()
         self:open_selected()
+    end, opts)
+    vim.keymap.set("n", "w", function()
+        self:open_selected_week()
     end, opts)
     vim.keymap.set("n", "q", function()
         self:close()
@@ -404,6 +486,12 @@ function Calendar:open_selected()
     local date = self:selected_date()
     self:close()
     self._vault:open_daily(date)
+end
+
+function Calendar:open_selected_week()
+    local week = self:selected_week()
+    self:close()
+    self._vault:open_weekly_for(week)
 end
 
 return Calendar

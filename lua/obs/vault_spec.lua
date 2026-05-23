@@ -131,6 +131,34 @@ describe("daily note completion", function()
     end)
 end)
 
+describe("weekly note", function()
+    local state = vault_fixture()
+
+    it("opens specific weekly note through journal", function()
+        local received_week
+        state.vault._journal = {
+            open_weekly_for = function(_, week)
+                received_week = week
+            end,
+        }
+
+        state.vault:open_weekly_for "2024-W07"
+
+        assert.are.equal("2024-W07", received_week)
+    end)
+
+    it("lists existing weekly dates", function()
+        local first_note = state.home / "diary" / "2024-W05.md"
+        local second_note = state.home / "diary" / "2024-W01.md"
+        first_note:touch {}
+        second_note:touch {}
+
+        local result = state.vault:list_weekly_dates()
+
+        assert.same({ "2024-W01", "2024-W05" }, result)
+    end)
+end)
+
 describe("find backlinks", function()
     local state = vault_fixture()
 

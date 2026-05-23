@@ -125,10 +125,12 @@ Normal-mode mappings like `<cmd>ObsNvimDailyNote<cr>` do not automatically pass
 `:10ObsNvimDailyNote`. Using both a count and date text shows a warning and
 does nothing.
 
-The daily-note calendar popup shows one month at a time. Existing daily notes
-are marked with `*`. Use `h`/`l` for previous/next day, `j`/`k` for
-previous/next week, `K`/`J` for previous/next month, `<CR>` to open the
-selected date, `q` or `<Esc>` to close, and `?` to toggle mapping help.
+The daily-note calendar popup shows one month at a time with ISO week numbers.
+Existing daily notes are marked with `*` on day cells, and existing weekly notes
+are marked with `*` next to the week number. Use `h`/`l` for previous/next day,
+`j`/`k` for previous/next week, `K`/`J` for previous/next month, `<CR>` to open
+the selected date, `w` to open the selected row's weekly note, `q` or `<Esc>` to
+close, and `?` to toggle mapping help.
 
 ## Tips
 

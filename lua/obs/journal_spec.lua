@@ -133,6 +133,47 @@ describe("journal", function()
             )
         end)
 
+        it("gets specific week", function()
+            local result = test_state.journal:week_for "2024-W07"
+
+            assert.are.equal("2024-W07", result:name(), "file name is wrong")
+            assert.is_true(
+                core.string_has_suffix(result:path(), ".md"),
+                "file type is wrong"
+            )
+        end)
+
+        it("gets and creates specific week", function()
+            local result = test_state.journal:week_for("2024-W07", true)
+
+            ---@type obs.utils.Path
+            local path = Path:new(result:path())
+
+            assert.is_true(path:exists(), "file was not created")
+        end)
+
+        it("creates specific week with matching template", function()
+            test_state.copy_with_opts {
+                weekly_template_name = "weekly",
+            }
+
+            ---@type obs.utils.Path
+            local weekly_file_template = Path:new(
+                test_state.templates_dir_path.path
+            ) / "weekly.md"
+
+            local expected_text = "this is example template 2024-W07"
+            weekly_file_template:write(expected_text, "w")
+
+            local result = test_state.journal:week_for("2024-W07", true)
+
+            ---@type obs.utils.Path
+            local path = Path:new(result:path())
+            local resulting_text = path:read()
+
+            assert.are.equal(expected_text, resulting_text)
+        end)
+
         describe("list", function()
             local state = journal_fixture()
 
@@ -151,6 +192,36 @@ describe("journal", function()
                 local result = state.journal:list_weeklies()
 
                 assert.are.equal(2, #result, "wrong number of dailies")
+            end)
+
+            it("lists sorted weekly dates", function()
+                local first_note = state.journal_dir_path.path / "2024-W05.md"
+                local second_note = state.journal_dir_path.path / "2023-W52.md"
+                local third_note = state.journal_dir_path.path / "2024-W01.md"
+                first_note:touch {}
+                second_note:touch {}
+                third_note:touch {}
+
+                local result = state.journal:list_weekly_dates()
+
+                assert.same({
+                    "2023-W52",
+                    "2024-W01",
+                    "2024-W05",
+                }, result)
+            end)
+
+            it("excludes non-weekly files when listing weekly dates", function()
+                local weekly_note = state.journal_dir_path.path / "2024-W07.md"
+                local daily_note = state.journal_dir_path.path / "2024-02-14.md"
+                local normal_note = state.journal_dir_path.path / "note.md"
+                weekly_note:touch {}
+                daily_note:touch {}
+                normal_note:touch {}
+
+                local result = state.journal:list_weekly_dates()
+
+                assert.same({ "2024-W07" }, result)
             end)
         end)
     end)

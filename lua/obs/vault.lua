@@ -404,6 +404,11 @@ function Vault:list_daily_dates()
     return self._journal:list_daily_dates()
 end
 
+---@return string[]
+function Vault:list_weekly_dates()
+    return self._journal:list_weekly_dates()
+end
+
 ---@param prefix string?
 ---@return string[]
 function Vault:complete_daily_dates(prefix)
@@ -413,6 +418,12 @@ end
 --- Opens weekly note to be edited
 function Vault:open_weekly()
     self._journal:open_weekly()
+end
+
+--- Opens weekly note for an ISO week to be edited
+---@param week string
+function Vault:open_weekly_for(week)
+    self._journal:open_weekly_for(week)
 end
 
 ---lists notes from vault

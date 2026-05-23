@@ -3,19 +3,26 @@ local Calendar = require "obs.calendar"
 local calendars = {}
 local original_notify = vim.notify
 
----@param opts { parsed_date: string?, daily_dates: string[]? }
+---@param opts { parsed_date: string?, daily_dates: string[]?, weekly_dates: string[]? }
 ---@return table
 local function make_vault(opts)
     opts = opts or {}
 
     return {
         opened_date = nil,
+        opened_week = nil,
         parsed_query = nil,
         list_daily_dates = function()
             return opts.daily_dates or {}
         end,
+        list_weekly_dates = function()
+            return opts.weekly_dates or {}
+        end,
         open_daily = function(vault, date_query)
             vault.opened_date = date_query
+        end,
+        open_weekly_for = function(vault, week)
+            vault.opened_week = week
         end,
         parse_daily_date = function(vault, date_query)
             vault.parsed_query = date_query
@@ -86,13 +93,49 @@ describe("calendar", function()
         local rendered_lines = lines(calendar)
 
         for i = 1, 8 do
-            assert.are.equal(27, #rendered_lines[i])
+            assert.are.equal(30, #rendered_lines[i])
+        end
+        for i = 2, 8 do
+            assert.are.equal(27, #rendered_lines[i]:sub(4))
         end
 
-        assert.truthy(rendered_lines[3]:find(" 1*", 1, true))
+        assert.are.equal("Wk Mo  Tu  We  Th  Fr  Sa  Su ", rendered_lines[2])
+        assert.are.equal("05 ", rendered_lines[3]:sub(1, 3))
+        assert.are.equal("07 ", rendered_lines[5]:sub(1, 3))
+        assert.are.equal(16, rendered_lines[3]:find(" 1*", 1, true))
         assert.truthy(rendered_lines[3]:find(" 2 ", 1, true))
-        assert.truthy(rendered_lines[5]:find("12*", 1, true))
+        assert.are.equal(4, rendered_lines[5]:find("12*", 1, true))
         assert.truthy(rendered_lines[5]:find("13 ", 1, true))
+    end)
+
+    it("marks existing weekly notes in the week column", function()
+        local calendar = open_calendar(make_vault {
+            parsed_date = "2024-02-14",
+            weekly_dates = {
+                "2024-W05",
+                "2024-W07",
+            },
+        })
+        local rendered_lines = lines(calendar)
+
+        assert.are.equal("05*", rendered_lines[3]:sub(1, 3))
+        assert.are.equal("06 ", rendered_lines[4]:sub(1, 3))
+        assert.are.equal("07*", rendered_lines[5]:sub(1, 3))
+        assert.are.equal(16, rendered_lines[3]:find(" 1 ", 1, true))
+        assert.are.equal(30, #rendered_lines[3])
+    end)
+
+    it("renders ISO week markers across year boundaries", function()
+        local calendar = open_calendar(make_vault {
+            parsed_date = "2021-01-01",
+            weekly_dates = {
+                "2020-W53",
+            },
+        })
+        local rendered_lines = lines(calendar)
+
+        assert.are.equal("53*", rendered_lines[3]:sub(1, 3))
+        assert.are.equal("01 ", rendered_lines[4]:sub(1, 3))
     end)
 
     it("moves between months and clamps selected day", function()
@@ -123,6 +166,7 @@ describe("calendar", function()
         assert.is_true(contains(lines(calendar), "? mappings"))
         assert.is_true(contains(lines(calendar), "h/l day    j/k week"))
         assert.is_true(contains(lines(calendar), "J/K month  <CR> open"))
+        assert.is_true(contains(lines(calendar), "w weekly   q/Esc close"))
 
         calendar:toggle_help()
 
@@ -142,6 +186,7 @@ describe("calendar", function()
 
         assert.is_true(contains(lhs, "J"))
         assert.is_true(contains(lhs, "K"))
+        assert.is_true(contains(lhs, "w"))
         assert.is_true(contains(lhs, "?"))
     end)
 
@@ -155,6 +200,28 @@ describe("calendar", function()
         calendar:open_selected()
 
         assert.are.equal("2024-02-15", vault.opened_date)
+    end)
+
+    it("opens selected row weekly note through the vault", function()
+        local vault = make_vault {
+            parsed_date = "2024-02-14",
+        }
+        local calendar = open_calendar(vault)
+
+        calendar:open_selected_week()
+
+        assert.are.equal("2024-W07", vault.opened_week)
+    end)
+
+    it("opens selected row weekly note across year boundaries", function()
+        local vault = make_vault {
+            parsed_date = "2021-01-01",
+        }
+        local calendar = open_calendar(vault)
+
+        calendar:open_selected_week()
+
+        assert.are.equal("2020-W53", vault.opened_week)
     end)
 
     it("warns and does not open for invalid initial date", function()

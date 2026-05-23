@@ -168,6 +168,13 @@ function Journal:open_weekly()
     weekly_note:edit()
 end
 
+---opens weekly note for an ISO week to be edited
+---@param week string
+function Journal:open_weekly_for(week)
+    local weekly_note = self:week_for(week, true)
+    weekly_note:edit()
+end
+
 ---find in jounal files
 
 -- lists journal daily entries
@@ -215,6 +222,20 @@ function Journal:list_weeklies()
     return files
 end
 
+---@return string[]
+function Journal:list_weekly_dates()
+    local results = {}
+    for _, file in ipairs(self:list_weeklies()) do
+        local name = file:name()
+        if name then
+            results[#results + 1] = name
+        end
+    end
+
+    table.sort(results)
+    return results
+end
+
 -- get today note file
 ---@param create_if_missing boolean?
 ---@return obs.utils.File
@@ -260,7 +281,15 @@ end
 ---@param create_if_missing boolean?
 ---@return obs.utils.File
 function Journal:this_week(create_if_missing)
-    local filename = self._week_provider()
+    return self:week_for(self._week_provider(), create_if_missing)
+end
+
+-- get weekly note file for an ISO week
+---@param week string
+---@param create_if_missing boolean?
+---@return obs.utils.File
+function Journal:week_for(week, create_if_missing)
+    local filename = week
     ---@type obs.utils.Path
     local path = self._home_path / (filename .. ".md")
 
