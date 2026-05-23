@@ -3,6 +3,44 @@ local Vault = require "obs.vault"
 
 local obs = {}
 
+local daily_note_count_warning =
+    "ObsNvimDailyNote: use either a count or a date, not both."
+
+---@param args vim.api.keyset.create_user_command.command_args
+---@return string?
+local function daily_note_date_query(args)
+    local date_query = args.args or ""
+    local has_count = args.range > 0
+    local has_prefixed_count = has_count and args.line1 ~= vim.fn.line "."
+
+    if has_prefixed_count and date_query ~= "" then
+        vim.notify(daily_note_count_warning, vim.log.levels.WARN)
+        return nil
+    end
+
+    if date_query == "" then
+        if has_count then
+            return "in " .. tostring(args.count) .. " days"
+        end
+
+        return ""
+    end
+
+    if not has_count then
+        return date_query
+    end
+
+    if date_query:match "^%-%d%d%-%d%d$" then
+        return ("%04d%s"):format(args.count, date_query)
+    end
+
+    if date_query:match "^%-" then
+        return tostring(args.count) .. date_query
+    end
+
+    return tostring(args.count) .. " " .. date_query
+end
+
 ---This functions creates module filesds that hold API tables.
 ---@param opts obs.VaultOpts?
 function obs.setup(opts)
@@ -67,7 +105,12 @@ end, {
 })
 
 vim.api.nvim_create_user_command("ObsNvimDailyNote", function(args)
-    obs.vault:open_daily(args.args)
+    local date_query = daily_note_date_query(args)
+    if date_query == nil then
+        return
+    end
+
+    obs.vault:open_daily(date_query)
 end, {
     complete = function(arg_lead)
         if not obs.vault then
@@ -76,6 +119,7 @@ end, {
 
         return obs.vault:complete_daily_dates(arg_lead)
     end,
+    count = true,
     desc = "Opens daily note",
     nargs = "*",
 })
