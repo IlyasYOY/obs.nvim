@@ -169,9 +169,19 @@ describe("commands", function()
 
                 vim.cmd "10ObsNvimDailyNote today"
                 vim.cmd "10ObsNvimDailyNote 2024-02-14"
+                vim.cmd "ObsNvimDailyNote 10 today"
+                vim.cmd "ObsNvimDailyNote 10 tomorrow"
 
                 assert.is_false(opened)
                 assert.same({
+                    {
+                        level = vim.log.levels.WARN,
+                        message = "ObsNvimDailyNote: use either a count or a date, not both.",
+                    },
+                    {
+                        level = vim.log.levels.WARN,
+                        message = "ObsNvimDailyNote: use either a count or a date, not both.",
+                    },
                     {
                         level = vim.log.levels.WARN,
                         message = "ObsNvimDailyNote: use either a count or a date, not both.",
@@ -201,9 +211,14 @@ describe("commands", function()
                 end
 
                 vim.cmd "10ObsNvimDailyNote! 2024-02-14"
+                vim.cmd "ObsNvimDailyNote! 10 today"
 
                 assert.is_false(opened)
                 assert.same({
+                    {
+                        level = vim.log.levels.WARN,
+                        message = "ObsNvimDailyNote: use either a count or a date, not both.",
+                    },
                     {
                         level = vim.log.levels.WARN,
                         message = "ObsNvimDailyNote: use either a count or a date, not both.",

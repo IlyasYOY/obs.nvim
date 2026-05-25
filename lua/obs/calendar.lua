@@ -68,6 +68,10 @@ end
 ---@param date string
 ---@return number?, number?, number?
 local function parse_date(date)
+    if type(date) ~= "string" then
+        return nil, nil, nil
+    end
+
     local year, month, day = date:match "^(%d%d%d%d)%-(%d%d)%-(%d%d)$"
     if not year then
         return nil, nil, nil
@@ -136,16 +140,9 @@ end
 ---@param month number
 ---@param day number
 ---@return string
-local function iso_week_id(year, month, day)
-    local monday_time = date_time(year, month, day)
-    local monday_date = os.date("*t", monday_time)
-    local thursday_time = os.time {
-        year = monday_date.year,
-        month = monday_date.month,
-        day = monday_date.day + 3,
-        hour = 12,
-    }
-    return os.date("%Y", thursday_time) .. "-W" .. os.date("%V", monday_time)
+local function journal_week_id(year, month, day)
+    local time = date_time(year, month, day)
+    return ("%04d-W%s"):format(year, os.date("%V", time))
 end
 
 ---@param vault obs.Vault
@@ -178,6 +175,17 @@ function Calendar.open(vault, date_query)
         return nil
     end
 
+    local year, month, day = parse_date(initial_date)
+    if not (year and month and day) then
+        vim.notify(
+            "ObsNvimDailyNote!: calendar requires YYYY-MM-DD daily filenames, got "
+                .. tostring(initial_date)
+                .. ".",
+            vim.log.levels.WARN
+        )
+        return nil
+    end
+
     local calendar = Calendar:new(vault, initial_date)
     calendar:show()
     return calendar
@@ -196,7 +204,7 @@ function Calendar:selected_week()
     end
 
     local column = weekday_column(self._year, self._month, self._day)
-    return iso_week_id(self._year, self._month, self._day - column + 1)
+    return journal_week_id(self._year, self._month, self._day - column + 1)
 end
 
 ---@return table<string, boolean>
@@ -240,7 +248,7 @@ function Calendar:_lines()
     for week = 1, 6 do
         local cells = {}
         local week_monday = 2 - first_column + ((week - 1) * 7)
-        local week_id = iso_week_id(self._year, self._month, week_monday)
+        local week_id = journal_week_id(self._year, self._month, week_monday)
         for column = 1, 7 do
             if (week == 1 and column < first_column) or day > month_days then
                 cells[#cells + 1] = "   "

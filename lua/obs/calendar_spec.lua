@@ -129,7 +129,7 @@ describe("calendar", function()
         local calendar = open_calendar(make_vault {
             parsed_date = "2021-01-01",
             weekly_dates = {
-                "2020-W53",
+                "2021-W53",
             },
         })
         local rendered_lines = lines(calendar)
@@ -221,7 +221,19 @@ describe("calendar", function()
 
         calendar:open_selected_week()
 
-        assert.are.equal("2020-W53", vault.opened_week)
+        assert.are.equal("2021-W53", vault.opened_week)
+    end)
+
+    it("keeps j and k moving by one week", function()
+        local calendar = open_calendar(make_vault {
+            parsed_date = "2024-02-14",
+        })
+
+        vim.api.nvim_feedkeys("j", "x", false)
+        assert.are.equal("2024-02-21", calendar:selected_date())
+
+        vim.api.nvim_feedkeys("k", "x", false)
+        assert.are.equal("2024-02-14", calendar:selected_date())
     end)
 
     it("warns and does not open for invalid initial date", function()
@@ -236,6 +248,29 @@ describe("calendar", function()
         assert.is_nil(calendar)
         assert.same({
             "Invalid daily note date: last friday",
+        }, notifications)
+    end)
+
+    it("warns and does not open for custom daily filenames", function()
+        local notifications = {}
+        local vault = make_vault {
+            parsed_date = "daily-2024-02-14",
+        }
+        vim.notify = function(message, level)
+            notifications[#notifications + 1] = {
+                level = level,
+                message = message,
+            }
+        end
+
+        local calendar = Calendar.open(vault, "")
+
+        assert.is_nil(calendar)
+        assert.same({
+            {
+                level = vim.log.levels.WARN,
+                message = "ObsNvimDailyNote!: calendar requires YYYY-MM-DD daily filenames, got daily-2024-02-14.",
+            },
         }, notifications)
     end)
 end)

@@ -35,11 +35,12 @@ local function daily_note_date_query(args)
         return ("%04d%s"):format(args.count, date_query)
     end
 
-    if date_query:match "^%-" then
-        return tostring(args.count) .. date_query
+    if date_query:match "^days?%s+ago$" then
+        return tostring(args.count) .. " " .. date_query
     end
 
-    return tostring(args.count) .. " " .. date_query
+    vim.notify(daily_note_count_warning, vim.log.levels.WARN)
+    return nil
 end
 
 ---This functions creates module filesds that hold API tables.

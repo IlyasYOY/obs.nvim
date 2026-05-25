@@ -128,7 +128,7 @@ does nothing.
 The daily-note calendar popup shows one month at a time with ISO week numbers.
 Existing daily notes are marked with `*` on day cells, and existing weekly notes
 are marked with `*` next to the week number. Use `h`/`l` for previous/next day,
-`j`/`k` for previous/next week, `K`/`J` for previous/next month, `<CR>` to open
+`k`/`j` for previous/next week, `K`/`J` for previous/next month, `<CR>` to open
 the selected date, `w` to open the selected row's weekly note, `q` or `<Esc>` to
 close, and `?` to toggle mapping help.
 
