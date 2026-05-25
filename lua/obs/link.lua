@@ -1,4 +1,4 @@
-local _note_name_no_brackets = "(([^%]%[]+)[|#]?([^%]%[]+))"
+local _note_name_no_brackets = "([^%]%[]+)"
 local _note_name_pattern = "%[%[" .. _note_name_no_brackets .. "%]%]"
 
 ---Simple link representation
@@ -45,7 +45,11 @@ end
 ---@param str string
 ---@return obs.Link?
 function Link.from_string(str)
-    if not string.match(str, "^" .. _note_name_no_brackets .. "$") then
+    if
+        not string.match(str, "^" .. _note_name_no_brackets .. "$")
+        or string.find(str, "[", 1, true)
+        or string.find(str, "]", 1, true)
+    then
         return nil
     end
     if #str == 0 then

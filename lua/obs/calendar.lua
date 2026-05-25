@@ -142,7 +142,7 @@ end
 ---@return string
 local function journal_week_id(year, month, day)
     local time = date_time(year, month, day)
-    return ("%04d-W%s"):format(year, os.date("%V", time))
+    return os.date("%G-W%V", time)
 end
 
 ---@param vault obs.Vault

@@ -163,6 +163,17 @@ function Vault:rename(name, new_name)
         vim.notify("note '" .. name .. "' was not found")
         return
     end
+
+    local destination = Path:new(note:path()):parent() / (new_name .. ".md")
+    local existing_note = self:get_note(new_name)
+    if
+        (existing_note ~= nil and existing_note:path() ~= note:path())
+        or (destination:exists() and destination:expand() ~= note:path())
+    then
+        vim.notify("note '" .. new_name .. "' already exists")
+        return
+    end
+
     note:change_name(new_name .. ".md")
     self:_update_links_in_notes(name, new_name)
 
@@ -244,6 +255,11 @@ end
 ---opens random note from the vault.
 function Vault:open_random_note()
     local notes = self:list_notes()
+    if #notes == 0 then
+        vim.notify "No notes found"
+        return
+    end
+
     local random_note_index = math.random(#notes)
     local random_note = notes[random_note_index]
     random_note:edit()
@@ -264,21 +280,27 @@ function Vault:_update_links_in_notes(old_note_name, new_note_name)
         note_text, updated_count = string.gsub(
             note_text,
             "%[%[" .. old_note_name .. "%]%]",
-            "[[" .. new_note_name .. "]]"
+            function()
+                return "[[" .. new_note_name .. "]]"
+            end
         )
         full_updated_counter = full_updated_counter + updated_count
 
         note_text, updated_count = string.gsub(
             note_text,
             "%[%[" .. old_note_name .. "%|",
-            "[[" .. new_note_name .. "|"
+            function()
+                return "[[" .. new_note_name .. "|"
+            end
         )
         full_updated_counter = full_updated_counter + updated_count
 
         note_text, updated_count = string.gsub(
             note_text,
             "%[%[" .. old_note_name .. "#",
-            "[[" .. new_note_name .. "#"
+            function()
+                return "[[" .. new_note_name .. "#"
+            end
         )
         full_updated_counter = full_updated_counter + updated_count
 
@@ -313,7 +335,7 @@ function Vault:find_backlinks(name)
         end,
     }, function(choice)
         if choice then
-            vim.cmd("edit " .. choice:path())
+            choice:edit()
         end
     end)
 end
@@ -327,7 +349,7 @@ function Vault:follow_link()
         local name = link.name
         local note = self:get_note(name)
         if note ~= nil then
-            vim.fn.execute("edit " .. note:path())
+            note:edit()
             return
         end
     end
@@ -339,7 +361,7 @@ end
 function Vault:is_current_buffer_in_vault()
     local file_name = vim.api.nvim_buf_get_name(0)
     local home_path = self._home_path:absolute()
-    return core.string_has_prefix(file_name, home_path, true)
+    return core.path_has_boundary_prefix(file_name, home_path)
 end
 
 ---checks if this buffer in the vault, usefull in autocommands.
@@ -363,7 +385,7 @@ end
 function Vault:open_note(name)
     local note = self:get_note(name)
     if note ~= nil then
-        vim.fn.execute("edit " .. note:path())
+        note:edit()
     else
         vim.notify("No note for name " .. name)
     end

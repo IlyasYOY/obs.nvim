@@ -6,6 +6,10 @@ local File = require "obs.utils.file"
 describe("change file name", function()
     local dir_fixture = spec.temp_dir_fixture()
 
+    after_each(function()
+        vim.cmd "enew!"
+    end)
+
     ---resolves file in test dit with specified name
     ---@param name string
     ---@return obs.utils.File
@@ -64,5 +68,13 @@ describe("change file name", function()
             "new name",
             resolve_file_with_name(expected_name):path()
         )
+    end)
+
+    it("should edit paths with Ex metacharacters", function()
+        local file = create_file_with_name "note|suffix.md"
+
+        file:edit()
+
+        assert.are.equal(file:path(), vim.api.nvim_buf_get_name(0))
     end)
 end)

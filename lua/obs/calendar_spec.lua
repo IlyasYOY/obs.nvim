@@ -129,7 +129,7 @@ describe("calendar", function()
         local calendar = open_calendar(make_vault {
             parsed_date = "2021-01-01",
             weekly_dates = {
-                "2021-W53",
+                "2020-W53",
             },
         })
         local rendered_lines = lines(calendar)
@@ -221,7 +221,7 @@ describe("calendar", function()
 
         calendar:open_selected_week()
 
-        assert.are.equal("2021-W53", vault.opened_week)
+        assert.are.equal("2020-W53", vault.opened_week)
     end)
 
     it("keeps j and k moving by one week", function()

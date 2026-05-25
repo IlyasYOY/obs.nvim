@@ -144,7 +144,9 @@ function Templater:process(opts)
         if string.find(template, tag, 1, true) then
             local func = var_provider.func
             local res = func { filename = opts.filename }
-            template = string.gsub(template, tag, res)
+            template = string.gsub(template, tag, function()
+                return res
+            end)
         end
     end
 

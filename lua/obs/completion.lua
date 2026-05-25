@@ -84,7 +84,7 @@ local function is_note_buffer(vault, bufnr)
     local home_path = vault._home_path:absolute()
 
     return vim.bo[bufnr].filetype == "markdown"
-        and core.string_has_prefix(file_name, home_path, true)
+        and core.path_has_boundary_prefix(file_name, home_path)
 end
 
 ---@param line string

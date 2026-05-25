@@ -1,6 +1,7 @@
 local Vault = require "obs.vault"
 local spec = require "obs.utils.spec"
 local File = require "obs.utils.file"
+local Path = require "obs.utils.path"
 local utils = require "obs.utils"
 
 local function vault_fixture()
@@ -293,6 +294,7 @@ end)
 describe("copy current note link", function()
     local state = vault_fixture()
     local original_save_to_exchange_buffer
+    local sibling_home_to_remove
 
     local function edit_note(note)
         vim.cmd("edit " .. vim.fn.fnameescape(note:path()))
@@ -305,6 +307,10 @@ describe("copy current note link", function()
 
     after_each(function()
         utils.save_to_exchange_buffer = original_save_to_exchange_buffer
+        if sibling_home_to_remove then
+            sibling_home_to_remove:rm()
+            sibling_home_to_remove = nil
+        end
         vim.cmd "enew!"
     end)
 
@@ -339,6 +345,19 @@ describe("copy current note link", function()
 
         assert.is_nil(link)
     end)
+
+    it("does not return wiki link for sibling vault path", function()
+        local sibling_home = Path:new(state.home:expand() .. "-old")
+        sibling_home_to_remove = sibling_home
+        local sibling_note_path = sibling_home / "my note.md"
+        sibling_note_path:touch()
+        local sibling_note = File:new(sibling_note_path:expand())
+        edit_note(sibling_note)
+
+        local link = state.vault:get_wiki_link_to_current_note()
+
+        assert.is_nil(link)
+    end)
 end)
 
 describe("rename", function()
@@ -360,6 +379,22 @@ describe("rename", function()
             "new test",
             vim.fn.resolve((state.home / "new test.md"):expand())
         )
+    end)
+
+    it("does not overwrite existing note", function()
+        local old_note = state.create_file "test.md"
+        local existing_note = state.create_file "new test.md"
+        old_note:write("old content", "w")
+        existing_note:write("existing content", "w")
+        local note_with_link_path = state.create_file "note-with-link.md"
+        note_with_link_path:write("[[test]]", "w")
+
+        local renamed = state.vault:rename("test", "new test")
+
+        assert.is_nil(renamed)
+        assert.are.equal("old content", old_note:read())
+        assert.are.equal("existing content", existing_note:read())
+        assert.are.equal("[[test]]", note_with_link_path:read())
     end)
 
     it("simple link renamed", function()
@@ -425,5 +460,61 @@ describe("rename", function()
             note_with_link_path:read(),
             "index should not be null"
         )
+    end)
+
+    it("preserves percent signs in renamed links", function()
+        state.create_file "test.md"
+        local simple_link_path = state.create_file "simple-link.md"
+        local alias_link_path = state.create_file "alias-link.md"
+        local header_link_path = state.create_file "header-link.md"
+        simple_link_path:write("[[test]]", "w")
+        alias_link_path:write("[[test|alias]]", "w")
+        header_link_path:write("[[test#header]]", "w")
+
+        state.vault:rename("test", "100% done")
+
+        assert.are.equal("[[100% done]]", simple_link_path:read())
+        assert.are.equal("[[100% done|alias]]", alias_link_path:read())
+        assert.are.equal("[[100% done#header]]", header_link_path:read())
+    end)
+end)
+
+describe("open random note", function()
+    local state = vault_fixture()
+    local original_notify
+
+    before_each(function()
+        original_notify = vim.notify
+    end)
+
+    after_each(function()
+        vim.notify = original_notify
+    end)
+
+    it("notifies when vault is empty", function()
+        local notifications = {}
+        vim.notify = function(message)
+            notifications[#notifications + 1] = message
+        end
+
+        state.vault:open_random_note()
+
+        assert.same({ "No notes found" }, notifications)
+    end)
+end)
+
+describe("open note", function()
+    local state = vault_fixture()
+
+    after_each(function()
+        vim.cmd "enew!"
+    end)
+
+    it("opens paths with Ex metacharacters", function()
+        local note = state.create_file "note|suffix.md"
+
+        state.vault:open_note "note|suffix"
+
+        assert.are.equal(note:path(), vim.api.nvim_buf_get_name(0))
     end)
 end)

@@ -1,5 +1,6 @@
 local Completion = require "obs.completion"
 local File = require "obs.utils.file"
+local Path = require "obs.utils.path"
 local Vault = require "obs.vault"
 local spec = require "obs.utils.spec"
 
@@ -35,6 +36,10 @@ local function completion_fixture()
 
     after_each(function()
         Completion.disable()
+        if result.sibling_home then
+            result.sibling_home:rm()
+            result.sibling_home = nil
+        end
         local bufnr = vim.api.nvim_get_current_buf()
         vim.bo.complete = default_complete
         vim.bo.completefunc = ""
@@ -206,6 +211,22 @@ describe("completion attach", function()
 
     it("does not attach when disabled", function()
         Completion.setup(state.vault, { enabled = false })
+
+        assert.are.equal(0, complete_source_count())
+        assert.are.equal("", vim.bo.completefunc)
+    end)
+
+    it("does not attach to sibling vault path", function()
+        state.sibling_home = Path:new(state.home:expand() .. "-old")
+        local sibling_note_path = state.sibling_home / "current.md"
+        sibling_note_path:touch()
+        local sibling_note = File:new(sibling_note_path:expand())
+        vim.cmd("edit " .. vim.fn.fnameescape(sibling_note:path()))
+        vim.bo.filetype = "markdown"
+        vim.bo.complete = default_complete
+        vim.bo.completefunc = ""
+
+        Completion.setup(state.vault)
 
         assert.are.equal(0, complete_source_count())
         assert.are.equal("", vim.bo.completefunc)

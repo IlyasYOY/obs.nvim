@@ -125,7 +125,7 @@ end
 
 ---Opens file in buffer for editing
 function File:edit()
-    vim.fn.execute("edit " .. self:path())
+    vim.fn.execute("edit " .. vim.fn.fnameescape(self:path()))
 end
 
 ---renames current file. Different from mv, it does the renaming only of the file name.

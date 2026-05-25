@@ -54,6 +54,18 @@ describe("journal", function()
     end
 
     describe("weekly", function()
+        it("uses time provider by default", function()
+            test_state.copy_with_opts {
+                time_provider = function()
+                    return time_for(2021, 1, 1)
+                end,
+            }
+
+            local result = test_state.journal:this_week()
+
+            assert.are.equal("2020-W53", result:name(), "file name is wrong")
+        end)
+
         it("get", function()
             test_state.copy_with_opts {
                 week_provider = function()

@@ -45,6 +45,14 @@ describe("from text", function()
         assert_link(result[1], "name")
     end)
 
+    it("one-character link", function()
+        local result = Link.from_text "[[a]]"
+
+        assert.is_not_nil(result)
+        assert.list_size(result, 1)
+        assert_link(result[1], "a")
+    end)
+
     it("multiple links", function()
         local result = Link.from_text "[[name]] [[full name|not really]]"
         assert.is_not_nil(result)
@@ -77,6 +85,13 @@ describe("from string", function()
         assert.is_not_nil(result)
         assert(result)
         assert_link(result, "name")
+    end)
+
+    it("one-character raw link", function()
+        local result = Link.from_string "a"
+        assert.is_not_nil(result)
+        assert(result)
+        assert_link(result, "a")
     end)
 
     for _, header in ipairs {
@@ -125,4 +140,11 @@ describe("find link", function()
             assert_link(link, "hello")
         end)
     end
+
+    it("has one-character link", function()
+        local link = find_link("[[a]]", 3)
+        assert.is_not_nil(link)
+        assert(link)
+        assert_link(link, "a")
+    end)
 end)

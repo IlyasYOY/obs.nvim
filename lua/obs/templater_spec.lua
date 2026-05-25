@@ -99,6 +99,18 @@ describe("process string", function()
         )
     end)
 
+    it("preserves percent signs from providers", function()
+        template = "Simple template with {{status}}"
+        templater = Templater:new {}
+        templater:add_var_provider("status", function()
+            return "100% done"
+        end)
+
+        result = templater:_process_for_current_buffer(template)
+
+        assert.are.equal("Simple template with 100% done", result)
+    end)
+
     it("multiple work complex case", function()
         template = "Simple template with {{date}} {{title}}"
         templater = Templater:new {}

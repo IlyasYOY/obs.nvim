@@ -52,6 +52,51 @@ end
 
 M.string_has_prefix = string_has_prefix
 
+---@param path string?
+---@return string?
+local function normalize_absolute_path(path)
+    if path == nil or path == "" then
+        return nil
+    end
+
+    local expanded = vim.fn.expand(path)
+    if expanded == "" then
+        return nil
+    end
+
+    local absolute = vim.fn.resolve(vim.fn.fnamemodify(expanded, ":p"))
+    if #absolute > 1 then
+        absolute = absolute:gsub("/+$", "")
+    end
+    if absolute == "" then
+        return "/"
+    end
+
+    return absolute
+end
+
+---@param path string?
+---@param root string?
+---@return boolean
+function M.path_has_boundary_prefix(path, root)
+    local normalized_path = normalize_absolute_path(path)
+    local normalized_root = normalize_absolute_path(root)
+
+    if not normalized_path or not normalized_root then
+        return false
+    end
+    if normalized_path == normalized_root then
+        return true
+    end
+
+    local root_prefix = normalized_root
+    if root_prefix ~= "/" then
+        root_prefix = root_prefix .. "/"
+    end
+
+    return string_has_prefix(normalized_path, root_prefix, true)
+end
+
 -- Check if str ends with prefix.
 ---@param str string
 ---@param suffix string?
