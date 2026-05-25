@@ -20,62 +20,98 @@ Example installation with [folke/lazy.nvim](https://github.com/folke/lazy.nvim):
 return {
     {
         "IlyasYOY/obs.nvim",
-        config = function()
-            local obs = require "obs"
-
-            obs.setup {
-                vault_home = "~/Notes",
-                vault_name = "Notes",
-                journal = {
-                    daily_template_name = "daily",
-                    weekly_template_name = "weekly",
-                },
-                templater = {
-                    home = "~/Notes/meta/templates",
-                    extra_providers = {
-                        {
-                            name = "descr",
-                            func = function()
-                                return vim.fn.input "Enter description: "
-                            end,
-                        },
-                    },
-                },
-            }
-
-            vim.keymap.set("n", "<leader>nn", "<cmd>ObsNvimFollowLink<cr>")
-            vim.keymap.set("n", "<leader>nr", "<cmd>ObsNvimRandomNote<cr>")
-            vim.keymap.set("n", "<leader>nN", "<cmd>ObsNvimNewNote<cr>")
-            vim.keymap.set("n", "<leader>ny", "<cmd>ObsNvimCopyObsidianLinkToNote<cr>")
-            vim.keymap.set("n", "<leader>nY", "<cmd>ObsNvimCopyWikiLinkToNote<cr>")
-            vim.keymap.set("n", "<leader>no", "<cmd>ObsNvimOpenInObsidian<cr>")
-            vim.keymap.set("n", "<leader>nd", "<cmd>ObsNvimDailyNote<cr>")
-            vim.keymap.set("n", "<leader>nw", "<cmd>ObsNvimWeeklyNote<cr>")
-            vim.keymap.set("n", "<leader>nrn", "<cmd>ObsNvimRename<cr>")
-            vim.keymap.set("n", "<leader>nT", "<cmd>ObsNvimTemplate<cr>")
-            vim.keymap.set("n", "<leader>nM", "<cmd>ObsNvimMove<cr>")
-            vim.keymap.set("n", "<leader>nb", "<cmd>ObsNvimBacklinks<cr>")
-        end,
     },
 }
 ```
+
+Example installation with Neovim's built-in `vim.pack`:
+
+```lua
+vim.pack.add {
+    { src = "https://github.com/IlyasYOY/obs.nvim" },
+}
+```
+
+## Requirements and health
+
+`obs.nvim` uses Neovim user commands, `vim.ui.select`, and `vim.ui.open`.
+A clipboard provider is needed for the link-copy commands. Wiki link completion
+requires Neovim 0.12 or newer; on older versions the rest of the plugin can
+still be configured, but completion is left disabled.
+
+After setup, run:
+
+```vim
+:checkhealth obs
+```
+
+The health check verifies that the plugin loads, `obs.setup()` has run, expected
+commands are registered, the required Neovim APIs and clipboard support are
+available, and the configured vault, templates, journal directories, and daily
+or weekly templates are visible.
 
 ## Configuration
 
 My configuration is
 [here](https://github.com/IlyasYOY/dotfiles/blob/master/config/nvim/after/plugin/obs.lua).
 
+Example configuration:
+
+```lua
+local obs = require "obs"
+
+obs.setup {
+    vault_home = "~/Notes",
+    vault_name = "Notes",
+    journal = {
+        daily_template_name = "daily",
+        weekly_template_name = "weekly",
+    },
+    templater = {
+        home = "~/Notes/meta/templates",
+        extra_providers = {
+            {
+                name = "descr",
+                func = function()
+                    return vim.fn.input "Enter description: "
+                end,
+            },
+        },
+    },
+}
+
+vim.keymap.set("n", "<leader>nn", "<cmd>ObsNvimFollowLink<cr>")
+vim.keymap.set("n", "<leader>nr", "<cmd>ObsNvimRandomNote<cr>")
+vim.keymap.set("n", "<leader>nN", "<cmd>ObsNvimNewNote<cr>")
+vim.keymap.set("n", "<leader>ny", "<cmd>ObsNvimCopyObsidianLinkToNote<cr>")
+vim.keymap.set("n", "<leader>nY", "<cmd>ObsNvimCopyWikiLinkToNote<cr>")
+vim.keymap.set("n", "<leader>no", "<cmd>ObsNvimOpenInObsidian<cr>")
+vim.keymap.set("n", "<leader>nd", "<cmd>ObsNvimDailyNote<cr>")
+vim.keymap.set("n", "<leader>nw", "<cmd>ObsNvimWeeklyNote<cr>")
+vim.keymap.set("n", "<leader>nrn", "<cmd>ObsNvimRename<cr>")
+vim.keymap.set("n", "<leader>nT", "<cmd>ObsNvimTemplate<cr>")
+vim.keymap.set("n", "<leader>nM", "<cmd>ObsNvimMove<cr>")
+vim.keymap.set("n", "<leader>nb", "<cmd>ObsNvimBacklinks<cr>")
+```
+
 `obs.setup()` accepts `obs.VaultOpts`, defined in
 [`lua/obs/vault.lua`](https://github.com/IlyasYOY/obs.nvim/blob/main/lua/obs/vault.lua).
 
-The most useful defaults are:
+The most useful options are:
 
-- `vault_home = "~/vimwiki"`
-- `vault_name = "vimwiki"`
-- `templater.home = "<vault_home>/meta/templates"`
-- `journal.home = "<vault_home>/diary"`
-- `journal.date_glob = "????-??-??"`
-- `journal.week_glob = "????-W??"`
+| Option | Default | Description |
+| --- | --- | --- |
+| `vault_home` | `~/vimwiki` | Root directory for Markdown notes. |
+| `vault_name` | `vimwiki` | Obsidian vault name used when building `obsidian://` links. |
+| `templater.home` | `<vault_home>/meta/templates` | Directory containing Markdown templates. |
+| `templater.include_default_providers` | `true` | Enables the built-in `{{date}}` and `{{title}}` template variables. |
+| `templater.extra_providers` | `{}` | Adds custom template variables. |
+| `journal.home` | `<vault_home>/diary` | Directory for daily and weekly journal notes. |
+| `journal.daily_template_name` | `nil` | Template name used when creating daily notes. |
+| `journal.weekly_template_name` | `nil` | Template name used when creating weekly notes. |
+| `journal.date_glob` | `????-??-??` | Glob used to list daily journal notes. |
+| `journal.week_glob` | `????-W??` | Glob used to list weekly journal notes. |
+| `completion.enabled` | `true` on Neovim 0.12+ | Enables built-in wiki link completion for Markdown notes inside the vault. |
 
 Daily notes use `journal.daily_template_name`. Weekly notes use
 `journal.weekly_template_name`. The older `journal.template_name` option still
@@ -98,7 +134,8 @@ are:
 | `{{date}}` | Current date as `YYYY-MM-DD` |
 | `{{title}}` | Current buffer filename without `.md` |
 
-You can add custom variables with `templater.extra_providers`.
+You can add custom variables with `templater.extra_providers`, or set
+`templater.include_default_providers = false` to disable the built-in variables.
 
 ## Commands
 
