@@ -291,6 +291,187 @@ describe("list", function()
     end)
 end)
 
+describe("next link", function()
+    local state = vault_fixture()
+    local original_notify = vim.notify
+
+    local function edit_current_note(lines)
+        local note = state.create_file "current.md"
+        note:write(table.concat(lines, "\n"), "w")
+        note:edit()
+        vim.bo.filetype = "markdown"
+    end
+
+    local function wiki_col(line, name)
+        local start_col = string.find(line, "[[" .. name, 1, true)
+        assert.is_not_nil(start_col)
+        return start_col + 1
+    end
+
+    local function markdown_col(line, label)
+        local start_col = string.find(line, "[" .. label, 1, true)
+        assert.is_not_nil(start_col)
+        return start_col
+    end
+
+    local function url_col(line, url)
+        local start_col = string.find(line, url, 1, true)
+        assert.is_not_nil(start_col)
+        return start_col - 1
+    end
+
+    local function assert_cursor(line, col)
+        local cursor = vim.api.nvim_win_get_cursor(0)
+
+        assert.are.equal(line, cursor[1], "wrong cursor line")
+        assert.are.equal(col, cursor[2], "wrong cursor column")
+    end
+
+    after_each(function()
+        vim.notify = original_notify
+        local bufnr = vim.api.nvim_get_current_buf()
+        vim.cmd "enew!"
+        if vim.api.nvim_buf_is_valid(bufnr) then
+            vim.api.nvim_buf_delete(bufnr, { force = true })
+        end
+    end)
+
+    it("moves forward through wiki links", function()
+        local lines = {
+            "[markdown](note.md) before [[one]]",
+            "then [[two]]",
+        }
+        edit_current_note(lines)
+        vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+        state.vault:next_link(1, false)
+        assert_cursor(1, wiki_col(lines[1], "one"))
+
+        state.vault:next_link(1, false)
+        assert_cursor(2, wiki_col(lines[2], "two"))
+    end)
+
+    it("includes Markdown links when requested", function()
+        local lines = {
+            "[markdown](note.md) before [[one]]",
+        }
+        edit_current_note(lines)
+        vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+        state.vault:next_link(1, true)
+
+        assert_cursor(1, markdown_col(lines[1], "markdown"))
+    end)
+
+    it("includes bare HTTP links when requested", function()
+        local lines = {
+            "see https://example.com before [[one]]",
+        }
+        edit_current_note(lines)
+        vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+        state.vault:next_link(1, true)
+
+        assert_cursor(1, url_col(lines[1], "https://example.com"))
+    end)
+
+    it("includes a first-column bare HTTP link before later links", function()
+        local lines = {
+            "https://vk.com/ [[later]]",
+        }
+        edit_current_note(lines)
+        vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+        state.vault:next_link(1, true)
+
+        assert_cursor(1, url_col(lines[1], "https://vk.com/"))
+    end)
+
+    it("reaches a second same-line link after a first-column URL", function()
+        local lines = {
+            "https://vk.com/ [[later]]",
+        }
+        edit_current_note(lines)
+        vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+        state.vault:next_link(1, true)
+        state.vault:next_link(1, true)
+
+        assert_cursor(1, wiki_col(lines[1], "later"))
+    end)
+
+    it("counts through a first-column URL to a later same-line link", function()
+        local lines = {
+            "https://vk.com/ [[later]]",
+        }
+        edit_current_note(lines)
+        vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+        state.vault:next_link(2, true)
+
+        assert_cursor(1, wiki_col(lines[1], "later"))
+    end)
+
+    it("lands inside labels of Markdown image syntax links", function()
+        local lines = {
+            "see ![link](https://vk.com/) before [[one]]",
+        }
+        edit_current_note(lines)
+        vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+        state.vault:next_link(1, true)
+
+        assert_cursor(1, markdown_col(lines[1], "link"))
+    end)
+
+    it("moves backward and wraps around", function()
+        local lines = {
+            "[[one]]",
+            "[[two]]",
+        }
+        edit_current_note(lines)
+        vim.api.nvim_win_set_cursor(0, { 1, wiki_col(lines[1], "one") })
+
+        state.vault:next_link(-1, false)
+
+        assert_cursor(2, wiki_col(lines[2], "two"))
+    end)
+
+    it("supports counts", function()
+        local lines = {
+            "[[one]] [[two]] [[three]]",
+        }
+        edit_current_note(lines)
+        vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+        state.vault:next_link(2, false)
+
+        assert_cursor(1, wiki_col(lines[1], "two"))
+    end)
+
+    it("notifies when no matching links exist", function()
+        local notifications = {}
+        vim.notify = function(message, level)
+            notifications[#notifications + 1] = {
+                level = level,
+                message = message,
+            }
+        end
+        edit_current_note { "[markdown](note.md) https://example.com" }
+        vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+        state.vault:next_link(1, false)
+
+        assert.same({
+            {
+                level = nil,
+                message = "No links found",
+            },
+        }, notifications)
+        assert_cursor(1, 0)
+    end)
+end)
+
 describe("copy current note link", function()
     local state = vault_fixture()
     local original_save_to_exchange_buffer

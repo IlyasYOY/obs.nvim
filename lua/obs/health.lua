@@ -5,6 +5,8 @@ local EXPECTED_COMMANDS = {
     "ObsNvimCopyWikiLinkToNote",
     "ObsNvimOpenInObsidian",
     "ObsNvimFollowLink",
+    "ObsNvimNextLink",
+    "ObsNvimPrevLink",
     "ObsNvimNewNote",
     "ObsNvimDailyNote",
     "ObsNvimWeeklyNote",

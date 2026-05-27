@@ -43,6 +43,16 @@ local function daily_note_date_query(args)
     return nil
 end
 
+---@param args vim.api.keyset.create_user_command.command_args
+---@return number
+local function link_command_count(args)
+    if args.range > 0 then
+        return args.count
+    end
+
+    return 1
+end
+
 ---This functions creates module filesds that hold API tables.
 ---@param opts obs.VaultOpts?
 function obs.setup(opts)
@@ -89,6 +99,26 @@ vim.api.nvim_create_user_command("ObsNvimFollowLink", function()
     end)
 end, {
     desc = "Navigate to note",
+})
+
+vim.api.nvim_create_user_command("ObsNvimNextLink", function(args)
+    obs.vault:run_if_note(function()
+        obs.vault:next_link(link_command_count(args), args.bang)
+    end)
+end, {
+    bang = true,
+    count = true,
+    desc = "Navigate to next link",
+})
+
+vim.api.nvim_create_user_command("ObsNvimPrevLink", function(args)
+    obs.vault:run_if_note(function()
+        obs.vault:next_link(-link_command_count(args), args.bang)
+    end)
+end, {
+    bang = true,
+    count = true,
+    desc = "Navigate to previous link",
 })
 
 vim.api.nvim_create_user_command("ObsNvimNewNote", function()

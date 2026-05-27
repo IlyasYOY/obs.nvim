@@ -11,6 +11,111 @@ describe("commands", function()
         vim.notify = original_notify
     end)
 
+    describe("link navigation commands", function()
+        local function link_calls()
+            local calls = {}
+            obs.vault = {
+                run_if_note = function(_, callback)
+                    callback()
+                end,
+                next_link = function(_, count, include_markdown)
+                    calls[#calls + 1] = {
+                        count = count,
+                        include_markdown = include_markdown,
+                    }
+                end,
+            }
+            return calls
+        end
+
+        it(
+            "registers next and previous commands with count and bang",
+            function()
+                local commands = vim.api.nvim_get_commands {}
+                local next_command = commands.ObsNvimNextLink
+                local prev_command = commands.ObsNvimPrevLink
+
+                assert.are.equal("0", next_command.nargs)
+                assert.are.equal("0", next_command.count)
+                assert.is_true(next_command.bang)
+
+                assert.are.equal("0", prev_command.nargs)
+                assert.are.equal("0", prev_command.count)
+                assert.is_true(prev_command.bang)
+            end
+        )
+
+        it("moves one link forward by default", function()
+            local calls = link_calls()
+
+            vim.cmd "ObsNvimNextLink"
+
+            assert.same({
+                {
+                    count = 1,
+                    include_markdown = false,
+                },
+            }, calls)
+        end)
+
+        it("passes prefixed count forward", function()
+            local calls = link_calls()
+
+            vim.cmd "3ObsNvimNextLink"
+
+            assert.same({
+                {
+                    count = 3,
+                    include_markdown = false,
+                },
+            }, calls)
+        end)
+
+        it("moves one link backward by default", function()
+            local calls = link_calls()
+
+            vim.cmd "ObsNvimPrevLink"
+
+            assert.same({
+                {
+                    count = -1,
+                    include_markdown = false,
+                },
+            }, calls)
+        end)
+
+        it("passes prefixed count backward", function()
+            local calls = link_calls()
+
+            vim.cmd "3ObsNvimPrevLink"
+
+            assert.same({
+                {
+                    count = -3,
+                    include_markdown = false,
+                },
+            }, calls)
+        end)
+
+        it("passes bang for both directions", function()
+            local calls = link_calls()
+
+            vim.cmd "ObsNvimNextLink!"
+            vim.cmd "ObsNvimPrevLink!"
+
+            assert.same({
+                {
+                    count = 1,
+                    include_markdown = true,
+                },
+                {
+                    count = -1,
+                    include_markdown = true,
+                },
+            }, calls)
+        end)
+    end)
+
     describe("ObsNvimDailyNote", function()
         it("accepts optional arguments", function()
             local command = vim.api.nvim_get_commands({}).ObsNvimDailyNote

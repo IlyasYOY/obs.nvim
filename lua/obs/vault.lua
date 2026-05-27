@@ -356,6 +356,182 @@ function Vault:follow_link()
     vim.notify "No link was found under the cursor"
 end
 
+---@class obs.LinkLocation
+---@field public line number one-based line number
+---@field public col number zero-based cursor landing column
+---@field public start_col number zero-based inclusive start column
+---@field public end_col number zero-based inclusive end column
+---@field public type "wiki"|"markdown"|"url"
+
+---@class obs.LastLinkLocation : obs.LinkLocation
+---@field public bufnr number
+
+---@param include_markdown boolean
+---@return obs.LinkLocation[]
+local function current_buffer_link_locations(include_markdown)
+    local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+    ---@type obs.LinkLocation[]
+    local locations = {}
+
+    for line_number, line in ipairs(lines) do
+        for _, span in ipairs(Link.find_links_in_line(line, include_markdown)) do
+            table.insert(locations, {
+                line = line_number,
+                col = span.cursor_col,
+                start_col = span.start_col,
+                end_col = span.end_col,
+                type = span.type,
+            })
+        end
+    end
+
+    return locations
+end
+
+---@param location obs.LinkLocation
+---@param line number
+---@param col number
+---@return boolean
+local function location_after_cursor(location, line, col)
+    return location.line > line
+        or (location.line == line and location.start_col >= col)
+end
+
+---@param location obs.LinkLocation
+---@param line number
+---@param col number
+---@return boolean
+local function location_before_cursor(location, line, col)
+    return location.line < line
+        or (location.line == line and location.end_col <= col)
+end
+
+---@param location obs.LinkLocation
+---@param other obs.LinkLocation?
+---@return boolean
+local function same_location(location, other)
+    return other ~= nil
+        and location.line == other.line
+        and location.col == other.col
+        and location.start_col == other.start_col
+        and location.end_col == other.end_col
+        and location.type == other.type
+end
+
+---@param locations obs.LinkLocation[]
+---@param bufnr number
+---@param line number
+---@param col number
+---@return obs.LinkLocation?
+local function last_selected_location(locations, bufnr, line, col)
+    local last = vim.w.obs_nvim_last_link_location
+    if
+        type(last) ~= "table"
+        or last.bufnr ~= bufnr
+        or last.line ~= line
+        or last.col ~= col
+    then
+        return nil
+    end
+
+    for _, location in ipairs(locations) do
+        if same_location(location, last) then
+            return location
+        end
+    end
+end
+
+---@param locations obs.LinkLocation[]
+---@param line number
+---@param col number
+---@param direction 1|-1
+---@param skip_location obs.LinkLocation?
+---@return obs.LinkLocation
+local function next_location(locations, line, col, direction, skip_location)
+    if direction > 0 then
+        for _, location in ipairs(locations) do
+            if
+                not same_location(location, skip_location)
+                and location_after_cursor(location, line, col)
+            then
+                return location
+            end
+        end
+
+        for _, location in ipairs(locations) do
+            if not same_location(location, skip_location) then
+                return location
+            end
+        end
+
+        return locations[1]
+    end
+
+    for index = #locations, 1, -1 do
+        local location = locations[index]
+        if
+            not same_location(location, skip_location)
+            and location_before_cursor(location, line, col)
+        then
+            return location
+        end
+    end
+
+    for index = #locations, 1, -1 do
+        local location = locations[index]
+        if not same_location(location, skip_location) then
+            return location
+        end
+    end
+
+    return locations[#locations]
+end
+
+---moves to the next link in the current buffer
+---@param count number signed link count
+---@param include_markdown boolean include inline Markdown links
+function Vault:next_link(count, include_markdown)
+    if count == 0 then
+        vim.notify("ObsNvimNextLink: count must not be 0", vim.log.levels.WARN)
+        return
+    end
+
+    local locations = current_buffer_link_locations(include_markdown)
+    if #locations == 0 then
+        vim.notify "No links found"
+        return
+    end
+
+    local cursor = vim.api.nvim_win_get_cursor(0)
+    local line = cursor[1]
+    local col = cursor[2]
+    local bufnr = vim.api.nvim_get_current_buf()
+    local direction = count > 0 and 1 or -1
+    local selected_location =
+        last_selected_location(locations, bufnr, line, col)
+
+    for _ = 1, math.abs(count) do
+        local location =
+            next_location(locations, line, col, direction, selected_location)
+        selected_location = location
+        line = location.line
+        col = location.col
+    end
+
+    if selected_location ~= nil then
+        vim.w.obs_nvim_last_link_location = {
+            bufnr = bufnr,
+            line = selected_location.line,
+            col = selected_location.col,
+            start_col = selected_location.start_col,
+            end_col = selected_location.end_col,
+            type = selected_location.type,
+        }
+    end
+
+    vim.api.nvim_win_set_cursor(0, { line, col })
+end
+
 ---checks if this buffer in the vault, usefull in autocommands.
 ---@return boolean
 function Vault:is_current_buffer_in_vault()

@@ -92,6 +92,12 @@ vim.keymap.set("n", "<leader>nrn", "<cmd>ObsNvimRename<cr>")
 vim.keymap.set("n", "<leader>nT", "<cmd>ObsNvimTemplate<cr>")
 vim.keymap.set("n", "<leader>nM", "<cmd>ObsNvimMove<cr>")
 vim.keymap.set("n", "<leader>nb", "<cmd>ObsNvimBacklinks<cr>")
+vim.keymap.set("n", "]l", function()
+    vim.cmd(vim.v.count1 .. "ObsNvimNextLink")
+end)
+vim.keymap.set("n", "[l", function()
+    vim.cmd(vim.v.count1 .. "ObsNvimPrevLink")
+end)
 ```
 
 `obs.setup()` accepts `obs.VaultOpts`, defined in
@@ -143,6 +149,8 @@ You can add custom variables with `templater.extra_providers`, or set
 | --- | --- |
 | `:ObsNvimTemplate` | Select and insert a template into the current note. |
 | `:ObsNvimFollowLink` | Follow the `[[wiki link]]` under the cursor. |
+| `:ObsNvimNextLink[!]` | Move to the next link in the current note. By default only `[[wiki links]]` are used; add `!` to include inline Markdown links and bare HTTP/HTTPS links. Prefix a count, such as `:3ObsNvimNextLink`, to move multiple links forward. |
+| `:ObsNvimPrevLink[!]` | Move to the previous link in the current note. Prefix a count, such as `:3ObsNvimPrevLink`, to move multiple links backward. |
 | `:ObsNvimRandomNote` | Open a random note from the vault. |
 | `:ObsNvimNewNote` | Create a note prefixed with `YYYY-MM-DD-`; empty names use the current timestamp. |
 | `:ObsNvimDailyNote[!] [date]` | Open a daily note, creating it if needed. Supports `YYYY-MM-DD`, `today`, `tomorrow`, `yesterday`, `N days ago`, and `in N days`; no argument opens today. Prefix with a count, such as `:10ObsNvimDailyNote`, or pass a number, such as `:ObsNvimDailyNote 10`, to open today + N days. Add `!` to choose the date from a calendar popup. Tab completes existing daily dates. |
@@ -156,6 +164,12 @@ You can add custom variables with `templater.extra_providers`, or set
 
 Most commands that act on the current buffer require the file to be a Markdown
 note inside the configured vault.
+
+`:ObsNvimNextLink` wraps at file boundaries. The example `]l` and `[l` mappings
+preserve counts, so `3]l` moves three wiki links forward and `2[l` moves two
+wiki links backward. Use `:ObsNvimNextLink!` or `:ObsNvimPrevLink!` when you
+want Markdown links like `[label](target.md)` and bare links like
+`https://example.com` included too.
 
 Normal-mode mappings like `<cmd>ObsNvimDailyNote<cr>` do not automatically pass
 `vim.v.count`. Use a function mapping if you want `10<leader>nd` to call
