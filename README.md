@@ -93,6 +93,7 @@ vim.keymap.set("n", "<leader>nT", "<cmd>ObsNvimTemplate<cr>")
 vim.keymap.set("n", "<leader>nM", "<cmd>ObsNvimMove<cr>")
 vim.keymap.set("n", "<leader>nb", "<cmd>ObsNvimBacklinks<cr>")
 vim.keymap.set("n", "<leader>nt", "<cmd>ObsNvimTags<cr>")
+vim.keymap.set("n", "<leader>ng", "<cmd>ObsNvimTag<cr>")
 vim.keymap.set("n", "]l", function()
     vim.cmd(vim.v.count1 .. "ObsNvimNextLink")
 end)
@@ -158,6 +159,7 @@ You can add custom variables with `templater.extra_providers`, or set
 | `:ObsNvimWeeklyNote` | Open this week's weekly note, creating it if needed. |
 | `:ObsNvimBacklinks` | Select from notes that link to the current note. |
 | `:ObsNvimTags` | Select a vault tag, then select and open a note with that tag. |
+| `:ObsNvimTag [tag]` | Select and open a note with the provided tag, or the tag under the cursor. |
 | `:ObsNvimRename` | Rename the current note and update matching wiki links. |
 | `:ObsNvimMove` | Select a vault directory and move the current note there. |
 | `:ObsNvimCopyObsidianLinkToNote` | Copy an Obsidian URL for the current note. |

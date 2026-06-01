@@ -182,6 +182,27 @@ end, {
     desc = "Find notes by tag",
 })
 
+vim.api.nvim_create_user_command("ObsNvimTag", function(args)
+    if args.args ~= "" then
+        obs.vault:find_tag(args.args)
+        return
+    end
+
+    obs.vault:run_if_note(function()
+        obs.vault:find_tag_under_cursor()
+    end)
+end, {
+    complete = function(arg_lead)
+        if not obs.vault then
+            return {}
+        end
+
+        return obs.vault:complete_tags(arg_lead)
+    end,
+    desc = "Find notes by tag under cursor or argument",
+    nargs = "?",
+})
+
 vim.api.nvim_create_user_command("ObsNvimRename", function()
     obs.vault:rename_current_note()
 end, {

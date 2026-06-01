@@ -131,6 +131,58 @@ describe("commands", function()
         end)
     end)
 
+    describe("ObsNvimTag", function()
+        it("accepts optional tag argument", function()
+            local command = vim.api.nvim_get_commands({}).ObsNvimTag
+
+            assert.are.equal("?", command.nargs)
+        end)
+
+        it("finds tag under cursor without arguments", function()
+            local called = false
+            obs.vault = {
+                run_if_note = function(_, callback)
+                    callback()
+                end,
+                find_tag_under_cursor = function()
+                    called = true
+                end,
+            }
+
+            vim.cmd "ObsNvimTag"
+
+            assert.is_true(called)
+        end)
+
+        it("finds provided tag argument", function()
+            local received_tag
+            obs.vault = {
+                find_tag = function(_, tag)
+                    received_tag = tag
+                end,
+            }
+
+            vim.cmd "ObsNvimTag #work"
+
+            assert.are.equal("#work", received_tag)
+        end)
+
+        it("completes tags through the vault", function()
+            local received_prefix
+            obs.vault = {
+                complete_tags = function(_, prefix)
+                    received_prefix = prefix
+                    return { "#work" }
+                end,
+            }
+
+            local result = vim.fn.getcompletion("ObsNvimTag #w", "cmdline")
+
+            assert.are.equal("#w", received_prefix)
+            assert.same({ "#work" }, result)
+        end)
+    end)
+
     describe("ObsNvimDailyNote", function()
         it("accepts optional arguments", function()
             local command = vim.api.nvim_get_commands({}).ObsNvimDailyNote

@@ -40,11 +40,18 @@ local function normalize_tag(value)
     return value
 end
 
+---Normalizes a tag string by trimming, stripping quotes, and removing '#'.
+---@param value string?
+---@return string?
+function Tag.normalize(value)
+    return normalize_tag(value)
+end
+
 ---@param tags string[]
 ---@param seen table<string, boolean>
 ---@param value string?
 local function insert_tag(tags, seen, value)
-    local tag = normalize_tag(value)
+    local tag = Tag.normalize(value)
     if tag == nil or seen[tag] then
         return
     end
@@ -277,17 +284,22 @@ local function is_inside_ignored_span(position, spans)
     return false
 end
 
+---@class obs.TagSpan
+---@field tag string normalized tag
+---@field start_pos number one-based inclusive start position
+---@field end_pos number one-based inclusive end position
+
 ---@param text string
----@param tags string[]
----@param seen table<string, boolean>
-local function parse_body_tags(text, tags, seen)
+---@return obs.TagSpan[]
+local function body_tag_spans(text)
     local index = 1
     local spans = ignored_spans(text)
+    local tag_spans = {}
 
     while index <= #text do
         local sharp = string.find(text, "#", index, true)
         if sharp == nil then
-            return
+            return tag_spans
         end
 
         local previous = sharp == 1 and ""
@@ -305,10 +317,45 @@ local function parse_body_tags(text, tags, seen)
             do
                 ending = ending + 1
             end
-            insert_tag(tags, seen, string.sub(text, sharp + 1, ending - 1))
+
+            local tag = Tag.normalize(string.sub(text, sharp + 1, ending - 1))
+            if tag ~= nil then
+                table.insert(tag_spans, {
+                    tag = tag,
+                    start_pos = sharp,
+                    end_pos = ending - 1,
+                })
+            end
             index = ending
         else
             index = sharp + 1
+        end
+    end
+
+    return tag_spans
+end
+
+---@param text string
+---@param tags string[]
+---@param seen table<string, boolean>
+local function parse_body_tags(text, tags, seen)
+    for _, span in ipairs(body_tag_spans(text)) do
+        insert_tag(tags, seen, span.tag)
+    end
+end
+
+---Finds the inline tag at a one-based position in text.
+---@param text string?
+---@param position number?
+---@return string?
+function Tag.find_at(text, position)
+    if text == nil or position == nil then
+        return nil
+    end
+
+    for _, span in ipairs(body_tag_spans(text)) do
+        if position >= span.start_pos and position <= span.end_pos then
+            return span.tag
         end
     end
 end

@@ -1,6 +1,56 @@
 local Tag = require "obs.tag"
 require "obs.utils.spec"
 
+describe("normalize tag", function()
+    it("strips leading hashes, quotes, and space", function()
+        assert.are.equal("work", Tag.normalize [[ "#work" ]])
+        assert.are.equal("work", Tag.normalize "work")
+        assert.is_nil(Tag.normalize "#")
+        assert.is_nil(Tag.normalize "")
+    end)
+end)
+
+describe("find tag at position", function()
+    it("finds a tag under the cursor", function()
+        local text = "before #work after"
+        local tag_start = string.find(text, "#work", 1, true)
+
+        assert.are.equal("work", Tag.find_at(text, tag_start))
+        assert.are.equal("work", Tag.find_at(text, tag_start + 2))
+    end)
+
+    it("does not find a tag outside the cursor position", function()
+        local text = "before #work after"
+
+        assert.is_nil(Tag.find_at(text, 1))
+    end)
+
+    it("finds slashed tags", function()
+        local text = "before #parent/child after"
+        local tag_start = string.find(text, "child", 1, true)
+
+        assert.are.equal("parent/child", Tag.find_at(text, tag_start))
+    end)
+
+    it("ignores tags inside brackets and fenced code", function()
+        local bracket_text = "[#ignored] #real"
+        local bracket_tag = string.find(bracket_text, "#ignored", 1, true)
+        local real_tag = string.find(bracket_text, "#real", 1, true)
+
+        assert.is_nil(Tag.find_at(bracket_text, bracket_tag))
+        assert.are.equal("real", Tag.find_at(bracket_text, real_tag))
+
+        local fence_text = table.concat({
+            "```lua",
+            "#ignored",
+            "```",
+        }, "\n")
+        local fence_tag = string.find(fence_text, "#ignored", 1, true)
+
+        assert.is_nil(Tag.find_at(fence_text, fence_tag))
+    end)
+end)
+
 describe("tags from text", function()
     it("returns no tags for empty text", function()
         assert.same({}, Tag.from_text "")

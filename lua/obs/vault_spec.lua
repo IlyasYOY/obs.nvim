@@ -302,6 +302,11 @@ describe("tags", function()
         return note
     end
 
+    local function edit_note(note)
+        note:edit()
+        vim.bo.filetype = "markdown"
+    end
+
     after_each(function()
         vim.ui.select = original_select
         vim.notify = original_notify
@@ -390,6 +395,84 @@ describe("tags", function()
         assert.are.equal("Notes tagged #work", calls[2].prompt)
         assert.are.equal("second", calls[2].first_label)
         assert.are.equal(work_note:path(), vim.api.nvim_buf_get_name(0))
+    end)
+
+    it("finds notes for a normalized tag argument", function()
+        local note = create_note("work.md", "#work")
+        local calls = {}
+
+        vim.ui.select = function(items, opts, callback)
+            calls[#calls + 1] = {
+                items = items,
+                prompt = opts.prompt,
+                first_label = opts.format_item(items[1]),
+            }
+            callback(items[1])
+        end
+
+        state.vault:find_tag "#work"
+
+        assert.are.equal("Notes tagged #work", calls[1].prompt)
+        assert.are.equal("work", calls[1].first_label)
+        assert.are.equal(note:path(), vim.api.nvim_buf_get_name(0))
+    end)
+
+    it("notifies when no tag argument is provided", function()
+        local notifications = {}
+        vim.notify = function(message)
+            notifications[#notifications + 1] = message
+        end
+
+        state.vault:find_tag "#"
+
+        assert.same({ "No tag was provided" }, notifications)
+    end)
+
+    it("notifies when a tag argument has no matching notes", function()
+        local notifications = {}
+        vim.notify = function(message)
+            notifications[#notifications + 1] = message
+        end
+
+        state.vault:find_tag "missing"
+
+        assert.same({ "No notes found for tag #missing" }, notifications)
+    end)
+
+    it("finds notes for tag under cursor", function()
+        local note = create_note("current.md", "before #work after")
+        create_note("other.md", "#work")
+        local calls = {}
+        edit_note(note)
+        local tag_start = string.find("before #work after", "#work", 1, true)
+        vim.api.nvim_win_set_cursor(0, { 1, tag_start + 1 })
+
+        vim.ui.select = function(items, opts, callback)
+            calls[#calls + 1] = {
+                items = items,
+                prompt = opts.prompt,
+            }
+            callback(items[1])
+        end
+
+        state.vault:find_tag_under_cursor()
+
+        assert.are.equal("Notes tagged #work", calls[1].prompt)
+        assert.list_size(calls[1].items, 2)
+    end)
+
+    it("notifies when no tag is under cursor", function()
+        local note = create_note("current.md", "no tag here")
+        local notifications = {}
+        edit_note(note)
+        vim.api.nvim_win_set_cursor(0, { 1, 0 })
+        vim.notify = function(message)
+            notifications[#notifications + 1] = message
+        end
+
+        state.vault:find_tag_under_cursor()
+
+        assert.same({ "No tag was found under the cursor" }, notifications)
     end)
 
     it(

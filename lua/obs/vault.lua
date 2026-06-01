@@ -1,4 +1,5 @@
 local Link = require "obs.link"
+local Tag = require "obs.tag"
 local Templater = require "obs.templater"
 local File = require "obs.utils.file"
 local Journal = require "obs.journal"
@@ -340,6 +341,21 @@ function Vault:find_backlinks(name)
     end)
 end
 
+---@param tag string
+---@param notes obs.utils.File[]
+local function select_note_with_tag(tag, notes)
+    vim.ui.select(notes, {
+        prompt = "Notes tagged #" .. tag,
+        format_item = function(note)
+            return note:name()
+        end,
+    }, function(choice)
+        if choice then
+            choice:edit()
+        end
+    end)
+end
+
 function Vault:find_tags()
     local tags = self:list_tags()
     if #tags == 0 then
@@ -357,23 +373,45 @@ function Vault:find_tags()
             return
         end
 
-        local notes = self:list_notes_with_tag(tag)
-        if #notes == 0 then
-            vim.notify("No notes found for tag #" .. tag)
-            return
-        end
-
-        vim.ui.select(notes, {
-            prompt = "Notes tagged #" .. tag,
-            format_item = function(note)
-                return note:name()
-            end,
-        }, function(choice)
-            if choice then
-                choice:edit()
-            end
-        end)
+        self:find_tag(tag)
     end)
+end
+
+---@param tag string?
+function Vault:find_tag(tag)
+    tag = Tag.normalize(tag)
+    if tag == nil then
+        vim.notify "No tag was provided"
+        return
+    end
+
+    local notes = self:list_notes_with_tag(tag)
+    if #notes == 0 then
+        vim.notify("No notes found for tag #" .. tag)
+        return
+    end
+
+    select_note_with_tag(tag, notes)
+end
+
+function Vault:find_tag_under_cursor()
+    local cursor = vim.api.nvim_win_get_cursor(0)
+    local line_number = cursor[1]
+    local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+    local text = table.concat(lines, "\n")
+    local position = cursor[2] + 1
+
+    for index = 1, line_number - 1 do
+        position = position + #lines[index] + 1
+    end
+
+    local tag = Tag.find_at(text, position)
+    if tag == nil then
+        vim.notify "No tag was found under the cursor"
+        return
+    end
+
+    self:find_tag(tag)
 end
 
 ---follows a link under the cursor
@@ -683,6 +721,27 @@ function Vault:list_tags()
     table.sort(tags)
 
     return tags
+end
+
+---@param prefix string?
+---@return string[]
+function Vault:complete_tags(prefix)
+    prefix = prefix or ""
+    local include_hash = vim.startswith(prefix, "#")
+    local normalized_prefix = Tag.normalize(prefix) or ""
+    local matches = {}
+
+    for _, tag in ipairs(self:list_tags()) do
+        if vim.startswith(tag, normalized_prefix) then
+            if include_hash then
+                table.insert(matches, "#" .. tag)
+            else
+                table.insert(matches, tag)
+            end
+        end
+    end
+
+    return matches
 end
 
 ---@param tag string
