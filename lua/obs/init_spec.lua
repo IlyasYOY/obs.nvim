@@ -116,6 +116,21 @@ describe("commands", function()
         end)
     end)
 
+    describe("ObsNvimTags", function()
+        it("finds tags through the vault", function()
+            local called = false
+            obs.vault = {
+                find_tags = function()
+                    called = true
+                end,
+            }
+
+            vim.cmd "ObsNvimTags"
+
+            assert.is_true(called)
+        end)
+    end)
+
     describe("ObsNvimDailyNote", function()
         it("accepts optional arguments", function()
             local command = vim.api.nvim_get_commands({}).ObsNvimDailyNote

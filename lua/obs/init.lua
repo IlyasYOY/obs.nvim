@@ -176,6 +176,12 @@ end, {
     desc = "Find in backlinks of the note",
 })
 
+vim.api.nvim_create_user_command("ObsNvimTags", function()
+    obs.vault:find_tags()
+end, {
+    desc = "Find notes by tag",
+})
+
 vim.api.nvim_create_user_command("ObsNvimRename", function()
     obs.vault:rename_current_note()
 end, {

@@ -340,6 +340,42 @@ function Vault:find_backlinks(name)
     end)
 end
 
+function Vault:find_tags()
+    local tags = self:list_tags()
+    if #tags == 0 then
+        vim.notify "No tags found"
+        return
+    end
+
+    vim.ui.select(tags, {
+        prompt = "Tags",
+        format_item = function(tag)
+            return "#" .. tag
+        end,
+    }, function(tag)
+        if not tag then
+            return
+        end
+
+        local notes = self:list_notes_with_tag(tag)
+        if #notes == 0 then
+            vim.notify("No notes found for tag #" .. tag)
+            return
+        end
+
+        vim.ui.select(notes, {
+            prompt = "Notes tagged #" .. tag,
+            format_item = function(note)
+                return note:name()
+            end,
+        }, function(choice)
+            if choice then
+                choice:edit()
+            end
+        end)
+    end)
+end
+
 ---follows a link under the cursor
 function Vault:follow_link()
     local _, col = unpack(vim.api.nvim_win_get_cursor(0))
@@ -628,6 +664,42 @@ end
 ---@return obs.utils.File[]
 function Vault:list_notes()
     return File.list(self._home_path:expand(), "**/*.md")
+end
+
+---@return string[]
+function Vault:list_tags()
+    local tags = {}
+    local seen = {}
+
+    for _, note in ipairs(self:list_notes()) do
+        for _, tag in ipairs(note:tags()) do
+            if not seen[tag] then
+                seen[tag] = true
+                table.insert(tags, tag)
+            end
+        end
+    end
+
+    table.sort(tags)
+
+    return tags
+end
+
+---@param tag string
+---@return obs.utils.File[]
+function Vault:list_notes_with_tag(tag)
+    local tagged_notes = {}
+
+    for _, note in ipairs(self:list_notes()) do
+        for _, note_tag in ipairs(note:tags()) do
+            if note_tag == tag then
+                table.insert(tagged_notes, note)
+                break
+            end
+        end
+    end
+
+    return tagged_notes
 end
 
 ---lists backlinks to a note using name

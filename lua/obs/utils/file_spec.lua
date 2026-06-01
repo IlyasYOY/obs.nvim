@@ -77,4 +77,21 @@ describe("change file name", function()
 
         assert.are.equal(file:path(), vim.api.nvim_buf_get_name(0))
     end)
+
+    it("parses note tags", function()
+        local file = create_file_with_name "note.md"
+        file:write(
+            table.concat({
+                "---",
+                "tags: [front, '#matter']",
+                "---",
+                "Body #inline #front",
+            }, "\n"),
+            "w"
+        )
+
+        local tags = file:tags()
+
+        assert.same({ "front", "matter", "inline" }, tags)
+    end)
 end)

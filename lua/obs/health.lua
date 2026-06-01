@@ -11,6 +11,7 @@ local EXPECTED_COMMANDS = {
     "ObsNvimDailyNote",
     "ObsNvimWeeklyNote",
     "ObsNvimBacklinks",
+    "ObsNvimTags",
     "ObsNvimRename",
     "ObsNvimMove",
 }

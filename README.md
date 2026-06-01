@@ -92,6 +92,7 @@ vim.keymap.set("n", "<leader>nrn", "<cmd>ObsNvimRename<cr>")
 vim.keymap.set("n", "<leader>nT", "<cmd>ObsNvimTemplate<cr>")
 vim.keymap.set("n", "<leader>nM", "<cmd>ObsNvimMove<cr>")
 vim.keymap.set("n", "<leader>nb", "<cmd>ObsNvimBacklinks<cr>")
+vim.keymap.set("n", "<leader>nt", "<cmd>ObsNvimTags<cr>")
 vim.keymap.set("n", "]l", function()
     vim.cmd(vim.v.count1 .. "ObsNvimNextLink")
 end)
@@ -156,6 +157,7 @@ You can add custom variables with `templater.extra_providers`, or set
 | `:ObsNvimDailyNote[!] [date]` | Open a daily note, creating it if needed. Supports `YYYY-MM-DD`, `today`, `tomorrow`, `yesterday`, `N days ago`, and `in N days`; no argument opens today. Prefix with a count, such as `:10ObsNvimDailyNote`, or pass a number, such as `:ObsNvimDailyNote 10`, to open today + N days. Add `!` to choose the date from a calendar popup. Tab completes existing daily dates. |
 | `:ObsNvimWeeklyNote` | Open this week's weekly note, creating it if needed. |
 | `:ObsNvimBacklinks` | Select from notes that link to the current note. |
+| `:ObsNvimTags` | Select a vault tag, then select and open a note with that tag. |
 | `:ObsNvimRename` | Rename the current note and update matching wiki links. |
 | `:ObsNvimMove` | Select a vault directory and move the current note there. |
 | `:ObsNvimCopyObsidianLinkToNote` | Copy an Obsidian URL for the current note. |

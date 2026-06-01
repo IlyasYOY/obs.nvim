@@ -1,5 +1,6 @@
 local utils = require "obs.utils"
 local Path = require "obs.utils.path"
+local Tag = require "obs.tag"
 
 ---Simple file wrapper
 ---TODO: Tests.
@@ -97,6 +98,17 @@ end
 ---@return string?
 function File:read()
     return self._path:read()
+end
+
+---Reads and parses note tags.
+---@return string[]
+function File:tags()
+    local text = self:read()
+    if text == nil or text == "" then
+        return {}
+    end
+
+    return Tag.from_text(text)
 end
 
 ---@param content string

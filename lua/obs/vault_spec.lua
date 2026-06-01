@@ -291,6 +291,128 @@ describe("list", function()
     end)
 end)
 
+describe("tags", function()
+    local state = vault_fixture()
+    local original_select = vim.ui.select
+    local original_notify = vim.notify
+
+    local function create_note(name, content)
+        local note = state.create_file(name)
+        note:write(content, "w")
+        return note
+    end
+
+    after_each(function()
+        vim.ui.select = original_select
+        vim.notify = original_notify
+        vim.cmd "enew!"
+    end)
+
+    it("lists sorted unique tags across notes", function()
+        create_note(
+            "first.md",
+            table.concat({
+                "---",
+                "tags: [zeta, #alpha]",
+                "---",
+                "#work",
+            }, "\n")
+        )
+        create_note("second.md", "#work #beta")
+
+        local tags = state.vault:list_tags()
+
+        assert.same({ "alpha", "beta", "work", "zeta" }, tags)
+    end)
+
+    it("lists notes with exact tag matches", function()
+        local first = create_note("first.md", "#work")
+        create_note("second.md", "#workflow")
+        local third = create_note("third.md", "#work #other")
+
+        local notes = state.vault:list_notes_with_tag "work"
+
+        assert.list_size(notes, 2)
+        assert.file(notes[1], "first", first:path())
+        assert.file(notes[2], "third", third:path())
+    end)
+
+    it("returns no notes for unknown tag", function()
+        create_note("first.md", "#work")
+
+        local notes = state.vault:list_notes_with_tag "missing"
+
+        assert.same({}, notes)
+    end)
+
+    it("notifies when no tags exist", function()
+        local notifications = {}
+        vim.notify = function(message)
+            notifications[#notifications + 1] = message
+        end
+
+        state.vault:find_tags()
+
+        assert.same({ "No tags found" }, notifications)
+    end)
+
+    it("selects a tag and opens a selected matching note", function()
+        create_note("first.md", "#home")
+        local work_note = create_note("second.md", "#work")
+        create_note("third.md", "#work")
+        local calls = {}
+
+        vim.ui.select = function(items, opts, callback)
+            calls[#calls + 1] = {
+                items = items,
+                prompt = opts.prompt,
+                first_label = opts.format_item(items[1]),
+            }
+
+            if #calls == 1 then
+                callback "work"
+                return
+            end
+
+            for _, note in ipairs(items) do
+                if note:path() == work_note:path() then
+                    callback(note)
+                    return
+                end
+            end
+        end
+
+        state.vault:find_tags()
+
+        assert.are.equal("Tags", calls[1].prompt)
+        assert.same({ "home", "work" }, calls[1].items)
+        assert.are.equal("#home", calls[1].first_label)
+        assert.are.equal("Notes tagged #work", calls[2].prompt)
+        assert.are.equal("second", calls[2].first_label)
+        assert.are.equal(work_note:path(), vim.api.nvim_buf_get_name(0))
+    end)
+
+    it(
+        "notifies when selected tag has no matching notes after rescan",
+        function()
+            local note = create_note("first.md", "#stale")
+            local notifications = {}
+
+            vim.notify = function(message)
+                notifications[#notifications + 1] = message
+            end
+            vim.ui.select = function(_, _, callback)
+                note:write("No tags now", "w")
+                callback "stale"
+            end
+
+            state.vault:find_tags()
+
+            assert.same({ "No notes found for tag #stale" }, notifications)
+        end
+    )
+end)
+
 describe("next link", function()
     local state = vault_fixture()
     local original_notify = vim.notify
