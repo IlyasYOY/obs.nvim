@@ -19,6 +19,7 @@ M.complete_source = "F" .. M.completefunc_option
 ---@class obs.CompletionContext
 ---@field public start_col number
 ---@field public base string
+---@field public append_closing_brackets boolean
 
 ---@type obs.Vault?
 M._vault = nil
@@ -93,6 +94,7 @@ end
 function M._find_wiki_link_context(line, cursor_col)
     cursor_col = math.max(0, math.min(cursor_col, #line))
     local prefix = string.sub(line, 1, cursor_col)
+    local suffix = string.sub(line, cursor_col + 1)
     local _, open_end = find_last(prefix, "[[")
     if not open_end then
         return nil
@@ -109,12 +111,16 @@ function M._find_wiki_link_context(line, cursor_col)
     return {
         start_col = open_end,
         base = base,
+        append_closing_brackets = string.sub(suffix, 1, 2) ~= "]]"
+            and string.sub(suffix, 1, 1) ~= "|"
+            and string.sub(suffix, 1, 1) ~= "#",
     }
 end
 
 ---@param base string
+---@param append_closing_brackets boolean
 ---@return table[]
-local function complete_notes(base)
+local function complete_notes(base, append_closing_brackets)
     if
         not M._enabled
         or not M._vault
@@ -127,8 +133,13 @@ local function complete_notes(base)
     for _, note in ipairs(M._vault:list_notes()) do
         local name = note:name()
         if name and core.string_has_prefix(name, base, true) then
+            local word = name
+            if append_closing_brackets then
+                word = word .. "]]"
+            end
+
             items[#items + 1] = {
-                word = name,
+                word = word,
                 abbr = name,
                 kind = "f",
                 menu = "[obs]",
@@ -137,7 +148,7 @@ local function complete_notes(base)
     end
 
     table.sort(items, function(left, right)
-        return left.word < right.word
+        return left.abbr < right.abbr
     end)
 
     return items
@@ -180,7 +191,7 @@ function M.completefunc(findstart, base)
     end
 
     return {
-        words = complete_notes(base),
+        words = complete_notes(base, context.append_closing_brackets),
         refresh = "always",
     }
 end

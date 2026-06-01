@@ -59,11 +59,26 @@ describe("completion context", function()
         assert.is_nil(find_context(line, cursor_col), "context must be absent")
     end
 
-    local function assert_context(line, cursor_col, start_col, base)
+    local function assert_context(
+        line,
+        cursor_col,
+        start_col,
+        base,
+        append_closing_brackets
+    )
+        if append_closing_brackets == nil then
+            append_closing_brackets = true
+        end
+
         local context = find_context(line, cursor_col)
         assert.is_not_nil(context)
         assert.are.equal(start_col, context.start_col, "wrong start column")
         assert.are.equal(base, context.base, "wrong base")
+        assert.are.equal(
+            append_closing_brackets,
+            context.append_closing_brackets,
+            "wrong append closing brackets state"
+        )
     end
 
     it("is absent outside wiki link", function()
@@ -79,7 +94,15 @@ describe("completion context", function()
     end)
 
     it("is present inside closed link before closing brackets", function()
-        assert_context("[[foo]]", #"[[foo", 2, "foo")
+        assert_context("[[foo]]", #"[[foo", 2, "foo", false)
+    end)
+
+    it("is present before alias suffix without appending brackets", function()
+        assert_context("[[foo|alias]]", #"[[foo", 2, "foo", false)
+    end)
+
+    it("is present before header suffix without appending brackets", function()
+        assert_context("[[foo#heading]]", #"[[foo", 2, "foo", false)
     end)
 
     it("is absent after closed link", function()
@@ -112,7 +135,7 @@ describe("completion items", function()
         assert.are.equal(completion_supported and 2 or -3, start_col)
     end)
 
-    it("returns matching note names without brackets", function()
+    it("returns matching note names with closing brackets", function()
         state.create_file "apple.md"
         state.create_file "dir/apricot.md"
         state.create_file "banana.md"
@@ -124,12 +147,36 @@ describe("completion items", function()
 
         if completion_supported then
             assert.list_size(result.words, 2)
-            assert.are.equal("apple", result.words[1].word)
-            assert.are.equal("apricot", result.words[2].word)
+            assert.are.equal("apple]]", result.words[1].word)
+            assert.are.equal("apple", result.words[1].abbr)
+            assert.are.equal("apricot]]", result.words[2].word)
+            assert.are.equal("apricot", result.words[2].abbr)
         else
             assert.list_size(result.words, 0)
         end
         assert.are.equal("always", result.refresh)
+    end)
+
+    it("forms a closed wiki link when applied", function()
+        state.create_file "apple.md"
+        Completion.setup(state.vault)
+        local line = "[[ap"
+        local cursor_col = #"[[ap"
+        set_line_and_cursor(line, cursor_col)
+
+        local start_col = Completion.completefunc(1, "")
+        local result = Completion.completefunc(0, "ap")
+
+        if not completion_supported then
+            assert.are.equal(-3, start_col)
+            assert.list_size(result.words, 0)
+            return
+        end
+
+        local applied = string.sub(line, 1, start_col)
+            .. result.words[1].word
+            .. string.sub(line, cursor_col + 1)
+        assert.are.equal("[[apple]]", applied)
     end)
 
     it("does not offer candidates outside note buffers", function()
@@ -165,7 +212,56 @@ describe("completion items", function()
             .. result.words[1].word
             .. string.sub(line, cursor_col + 1)
         assert.are.equal("foobar", result.words[1].word)
+        assert.are.equal("foobar", result.words[1].abbr)
         assert.are.equal("[[foobar]]", applied)
+    end)
+
+    it("keeps existing alias suffix around applied completion", function()
+        state.create_file "foobar.md"
+        Completion.setup(state.vault)
+        local line = "[[foo|alias]]"
+        local cursor_col = #"[[foo"
+        set_line_and_cursor(line, cursor_col)
+
+        local start_col = Completion.completefunc(1, "")
+        local result = Completion.completefunc(0, "foo")
+
+        if not completion_supported then
+            assert.are.equal(-3, start_col)
+            assert.list_size(result.words, 0)
+            return
+        end
+
+        local applied = string.sub(line, 1, start_col)
+            .. result.words[1].word
+            .. string.sub(line, cursor_col + 1)
+        assert.are.equal("foobar", result.words[1].word)
+        assert.are.equal("foobar", result.words[1].abbr)
+        assert.are.equal("[[foobar|alias]]", applied)
+    end)
+
+    it("keeps existing header suffix around applied completion", function()
+        state.create_file "foobar.md"
+        Completion.setup(state.vault)
+        local line = "[[foo#heading]]"
+        local cursor_col = #"[[foo"
+        set_line_and_cursor(line, cursor_col)
+
+        local start_col = Completion.completefunc(1, "")
+        local result = Completion.completefunc(0, "foo")
+
+        if not completion_supported then
+            assert.are.equal(-3, start_col)
+            assert.list_size(result.words, 0)
+            return
+        end
+
+        local applied = string.sub(line, 1, start_col)
+            .. result.words[1].word
+            .. string.sub(line, cursor_col + 1)
+        assert.are.equal("foobar", result.words[1].word)
+        assert.are.equal("foobar", result.words[1].abbr)
+        assert.are.equal("[[foobar#heading]]", applied)
     end)
 end)
 
