@@ -37,6 +37,10 @@ local function normalize_tag(value)
         return nil
     end
 
+    if string.match(value, "^%d+$") then
+        return nil
+    end
+
     return value
 end
 
@@ -147,14 +151,99 @@ end
 
 ---@param char string
 ---@return boolean
-local function is_tag_char(char)
+local function is_tag_char(char, valid_utf8)
+    if char == nil or char == "" then
+        return false
+    end
+
+    if #char > 1 then
+        return valid_utf8 ~= false
+    end
+
     return string.match(char, "[%w_/%-]") ~= nil
 end
 
 ---@param char string
 ---@return boolean
-local function is_tag_start_char(char)
+local function is_tag_start_char(char, valid_utf8)
+    if char == nil or char == "" then
+        return false
+    end
+
+    if #char > 1 then
+        return valid_utf8 ~= false
+    end
+
     return string.match(char, "[%w_]") ~= nil
+end
+
+---@param byte number
+---@return boolean
+local function is_utf8_continuation_byte(byte)
+    return byte >= 0x80 and byte <= 0xbf
+end
+
+---@param text string
+---@param index number
+---@return string?, number, boolean
+local function utf8_char_at(text, index)
+    if index > #text then
+        return nil, index, false
+    end
+
+    local byte = string.byte(text, index)
+    local length
+
+    if byte < 0x80 then
+        length = 1
+    elseif byte >= 0xc2 and byte <= 0xdf then
+        length = 2
+    elseif byte >= 0xe0 and byte <= 0xef then
+        length = 3
+    elseif byte >= 0xf0 and byte <= 0xf4 then
+        length = 4
+    else
+        return string.sub(text, index, index), index + 1, false
+    end
+
+    local end_index = index + length - 1
+    if end_index > #text then
+        return string.sub(text, index, index), index + 1, false
+    end
+
+    for continuation_index = index + 1, end_index do
+        if
+            not is_utf8_continuation_byte(string.byte(text, continuation_index))
+        then
+            return string.sub(text, index, index), index + 1, false
+        end
+    end
+
+    return string.sub(text, index, end_index), index + length, true
+end
+
+---@param text string
+---@param index number
+---@return string?, boolean
+local function previous_utf8_char(text, index)
+    if index < 1 then
+        return nil, false
+    end
+
+    local start_index = index
+    while
+        start_index > 1
+        and is_utf8_continuation_byte(string.byte(text, start_index))
+    do
+        start_index = start_index - 1
+    end
+
+    local char, next_index, valid_utf8 = utf8_char_at(text, start_index)
+    if next_index - 1 ~= index then
+        return string.sub(text, index, index), false
+    end
+
+    return char, valid_utf8
 end
 
 ---@class obs.TagIgnoredSpan
@@ -261,10 +350,55 @@ local function fenced_code_spans(text)
 end
 
 ---@param text string
+---@param index number
+---@return number
+local function backtick_run_length(text, index)
+    local ending = index
+    while ending <= #text and string.sub(text, ending, ending) == "`" do
+        ending = ending + 1
+    end
+
+    return ending - index
+end
+
+---@param text string
+---@return obs.TagIgnoredSpan[]
+local function inline_code_spans(text)
+    local spans = {}
+    local index = 1
+
+    while index <= #text do
+        local start_pos = string.find(text, "`", index, true)
+        if start_pos == nil then
+            return spans
+        end
+
+        local tick_count = backtick_run_length(text, start_pos)
+        local marker = string.rep("`", tick_count)
+        local end_pos = string.find(text, marker, start_pos + tick_count, true)
+
+        if end_pos == nil then
+            index = start_pos + tick_count
+        else
+            table.insert(spans, {
+                start_pos = start_pos,
+                end_pos = end_pos + tick_count - 1,
+            })
+            index = end_pos + tick_count
+        end
+    end
+
+    return spans
+end
+
+---@param text string
 ---@return obs.TagIgnoredSpan[]
 local function ignored_spans(text)
     local spans = bracket_spans(text)
     for _, span in ipairs(fenced_code_spans(text)) do
+        table.insert(spans, span)
+    end
+    for _, span in ipairs(inline_code_spans(text)) do
         table.insert(spans, span)
     end
 
@@ -302,20 +436,22 @@ local function body_tag_spans(text)
             return tag_spans
         end
 
-        local previous = sharp == 1 and ""
-            or string.sub(text, sharp - 1, sharp - 1)
-        local first = string.sub(text, sharp + 1, sharp + 1)
+        local previous, previous_valid_utf8 =
+            previous_utf8_char(text, sharp - 1)
+        local first, _, first_valid_utf8 = utf8_char_at(text, sharp + 1)
         if
-            (previous == "" or not is_tag_char(previous))
+            (previous == nil or not is_tag_char(previous, previous_valid_utf8))
             and not is_inside_ignored_span(sharp, spans)
-            and is_tag_start_char(first)
+            and is_tag_start_char(first, first_valid_utf8)
         then
             local ending = sharp + 1
-            while
-                ending <= #text
-                and is_tag_char(string.sub(text, ending, ending))
-            do
-                ending = ending + 1
+            while ending <= #text do
+                local char, next_index, valid_utf8 = utf8_char_at(text, ending)
+                if not is_tag_char(char, valid_utf8) then
+                    break
+                end
+
+                ending = next_index
             end
 
             local tag = Tag.normalize(string.sub(text, sharp + 1, ending - 1))

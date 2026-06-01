@@ -8,6 +8,12 @@ describe("normalize tag", function()
         assert.is_nil(Tag.normalize "#")
         assert.is_nil(Tag.normalize "")
     end)
+
+    it("rejects all-numeric tags", function()
+        assert.is_nil(Tag.normalize "#123")
+        assert.is_nil(Tag.normalize "123")
+        assert.are.equal("123abc", Tag.normalize "#123abc")
+    end)
 end)
 
 describe("find tag at position", function()
@@ -32,6 +38,13 @@ describe("find tag at position", function()
         assert.are.equal("parent/child", Tag.find_at(text, tag_start))
     end)
 
+    it("does not find all-numeric tags", function()
+        local text = "Issue #123"
+        local tag_start = string.find(text, "#123", 1, true)
+
+        assert.is_nil(Tag.find_at(text, tag_start))
+    end)
+
     it("ignores tags inside brackets and fenced code", function()
         local bracket_text = "[#ignored] #real"
         local bracket_tag = string.find(bracket_text, "#ignored", 1, true)
@@ -48,6 +61,24 @@ describe("find tag at position", function()
         local fence_tag = string.find(fence_text, "#ignored", 1, true)
 
         assert.is_nil(Tag.find_at(fence_text, fence_tag))
+    end)
+
+    it("ignores tags inside inline code", function()
+        local text = "Use `#ignored` before #real"
+        local code_tag = string.find(text, "#ignored", 1, true)
+        local real_tag = string.find(text, "#real", 1, true)
+
+        assert.is_nil(Tag.find_at(text, code_tag))
+        assert.are.equal("real", Tag.find_at(text, real_tag))
+    end)
+
+    it("finds non-ASCII tags", function()
+        local text = "before #работа after"
+        local tag_start = string.find(text, "#работа", 1, true)
+        local tag_middle = string.find(text, "бота", 1, true)
+
+        assert.are.equal("работа", Tag.find_at(text, tag_start))
+        assert.are.equal("работа", Tag.find_at(text, tag_middle))
     end)
 end)
 
@@ -114,6 +145,31 @@ describe("tags from text", function()
         }, tags)
     end)
 
+    it("ignores all-numeric inline tags", function()
+        local tags = Tag.from_text "Issue #123 and PR #456, but #work remains"
+
+        assert.same({ "work" }, tags)
+    end)
+
+    it("parses non-ASCII inline tags", function()
+        local tags =
+            Tag.from_text "#работа #プロジェクト #дело/проект #тег-name, #work"
+
+        assert.same({
+            "работа",
+            "プロジェクト",
+            "дело/проект",
+            "тег-name",
+            "work",
+        }, tags)
+    end)
+
+    it("rejects inline tags after non-ASCII tag characters", function()
+        local tags = Tag.from_text "слово#skip #real"
+
+        assert.same({ "real" }, tags)
+    end)
+
     it("ignores inline tags inside Markdown link labels", function()
         local text = "Сделал новью небольшую доработку в Minuet, получилось интересно: "
             .. "[feat: add Fidget component for displaying Minuet request status "
@@ -158,6 +214,13 @@ describe("tags from text", function()
         local tags = Tag.from_text(text)
 
         assert.same({ "outside", "after" }, tags)
+    end)
+
+    it("ignores inline tags inside inline code", function()
+        local tags =
+            Tag.from_text "Use `#include` and ``#todo`` before #real `#kept"
+
+        assert.same({ "real", "kept" }, tags)
     end)
 
     it("deduplicates tags in first-seen order", function()

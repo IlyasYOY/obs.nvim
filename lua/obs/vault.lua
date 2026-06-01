@@ -729,6 +729,12 @@ function Vault:complete_tags(prefix)
     prefix = prefix or ""
     local include_hash = vim.startswith(prefix, "#")
     local normalized_prefix = Tag.normalize(prefix) or ""
+    if prefix ~= "" and normalized_prefix == "" then
+        local bare_prefix = prefix:gsub("^#+", "")
+        if bare_prefix ~= "" then
+            return {}
+        end
+    end
     local matches = {}
 
     for _, tag in ipairs(self:list_tags()) do

@@ -330,6 +330,23 @@ describe("tags", function()
         assert.same({ "alpha", "beta", "work", "zeta" }, tags)
     end)
 
+    it("lists and completes UTF-8 tags without numeric or code tags", function()
+        local note = create_note(
+            "unicode.md",
+            "Issue #123 uses `#inline` before #работа"
+        )
+        create_note("noise.md", "#123 `#inline`")
+
+        local tags = state.vault:list_tags()
+        local notes = state.vault:list_notes_with_tag "работа"
+
+        assert.same({ "работа" }, tags)
+        assert.same({ "#работа" }, state.vault:complete_tags "#р")
+        assert.same({}, state.vault:complete_tags "#1")
+        assert.list_size(notes, 1)
+        assert.file(notes[1], "unicode", note:path())
+    end)
+
     it("lists notes with exact tag matches", function()
         local first = create_note("first.md", "#work")
         create_note("second.md", "#workflow")
