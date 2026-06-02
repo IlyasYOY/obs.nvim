@@ -21,6 +21,7 @@ local File = require "obs.utils.file"
 ---@class obs.TemplaterOpts
 ---@field public include_default_providers? boolean
 ---@field public home string
+---@field public note_template_name? string
 ---@field public extra_providers? obs.VarProvider[]
 local TemplaterOpts = {}
 TemplaterOpts.__index = TemplaterOpts

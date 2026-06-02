@@ -46,6 +46,30 @@ describe("new note", function()
         return state.home / common_filename
     end
 
+    local function configure_note_template(template_text)
+        local templates_home = state.home / "meta" / "templates"
+        local template_path = templates_home / "note.md"
+        template_path:write(template_text, "w")
+
+        state.vault = Vault:new {
+            vault_home = state.home:expand(),
+            time_provider = function()
+                return state.time_mock or common_time
+            end,
+            templater = {
+                note_template_name = "note",
+                extra_providers = {
+                    {
+                        name = "filename",
+                        func = function(context)
+                            return context.filename
+                        end,
+                    },
+                },
+            },
+        }
+    end
+
     it("for correct note", function()
         state.time_mock = common_time
 
@@ -69,6 +93,50 @@ describe("new note", function()
         local file = state.vault:create_note ""
 
         assert(file == nil, "file should not be overriten")
+    end)
+
+    it("creates empty file when note template is not configured", function()
+        state.time_mock = common_time
+
+        local file = state.vault:create_note "cool note"
+
+        assert.are.equal("", file:read())
+    end)
+
+    it("creates note with matching template", function()
+        state.time_mock = common_time
+        configure_note_template "Title: {{title}}\nFilename: {{filename}}"
+
+        local file = state.vault:create_note "cool note"
+
+        assert.are.equal(
+            "Title: 2023-02-01-cool note\nFilename: 2023-02-01-cool note.md",
+            file:read()
+        )
+    end)
+
+    it("creates unnamed note with matching template", function()
+        state.time_mock = common_time
+        configure_note_template "Title: {{title}}\nFilename: {{filename}}"
+
+        local file = state.vault:create_note ""
+
+        assert.are.equal(
+            "Title: 2023-02-01-1675255557\nFilename: 2023-02-01-1675255557.md",
+            file:read()
+        )
+    end)
+
+    it("does not overwrite existing note with configured template", function()
+        state.time_mock = common_time
+        local existing_note = state.home / "2023-02-01-cool note.md"
+        existing_note:write("existing content", "w")
+        configure_note_template "new content"
+
+        local file = state.vault:create_note "cool note"
+
+        assert.is_nil(file)
+        assert.are.equal("existing content", existing_note:read())
     end)
 
     it("for nil name", function()

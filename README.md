@@ -47,8 +47,8 @@ After setup, run:
 
 The health check verifies that the plugin loads, `obs.setup()` has run, expected
 commands are registered, the required Neovim APIs and clipboard support are
-available, and the configured vault, templates, journal directories, and daily
-or weekly templates are visible.
+available, and the configured vault, templates, journal directories, and note,
+daily, or weekly templates are visible.
 
 ## Configuration
 
@@ -69,6 +69,7 @@ obs.setup {
     },
     templater = {
         home = "~/Notes/meta/templates",
+        note_template_name = "note",
         extra_providers = {
             {
                 name = "descr",
@@ -113,6 +114,7 @@ The most useful options are:
 | `vault_name` | `vimwiki` | Obsidian vault name used when building `obsidian://` links. |
 | `templater.home` | `<vault_home>/meta/templates` | Directory containing Markdown templates. |
 | `templater.include_default_providers` | `true` | Enables the built-in `{{date}}` and `{{title}}` template variables. |
+| `templater.note_template_name` | `nil` | Template name used when creating regular notes with `:ObsNvimNewNote`. |
 | `templater.extra_providers` | `{}` | Adds custom template variables. |
 | `journal.home` | `<vault_home>/diary` | Directory for daily and weekly journal notes. |
 | `journal.daily_template_name` | `nil` | Template name used when creating daily notes. |
@@ -121,9 +123,11 @@ The most useful options are:
 | `journal.week_glob` | `????-W??` | Glob used to list weekly journal notes. |
 | `completion.enabled` | `true` on Neovim 0.12+ | Enables built-in wiki link completion for Markdown notes inside the vault. |
 
-Daily notes use `journal.daily_template_name`. Weekly notes use
-`journal.weekly_template_name`. The older `journal.template_name` option still
-works as a deprecated alias for the daily template.
+Regular notes created with `:ObsNvimNewNote` use
+`templater.note_template_name`. Daily notes use `journal.daily_template_name`.
+Weekly notes use `journal.weekly_template_name`. The older
+`journal.template_name` option still works as a deprecated alias for the daily
+template.
 
 Wiki link completion requires Neovim 0.12 or newer and is enabled by default
 for Markdown notes inside the vault. It completes note names inside `[[...]]`
@@ -154,7 +158,7 @@ You can add custom variables with `templater.extra_providers`, or set
 | `:ObsNvimNextLink[!]` | Move to the next link in the current note. By default only `[[wiki links]]` are used; add `!` to include inline Markdown links and bare HTTP/HTTPS links. Prefix a count, such as `:3ObsNvimNextLink`, to move multiple links forward. |
 | `:ObsNvimPrevLink[!]` | Move to the previous link in the current note. Prefix a count, such as `:3ObsNvimPrevLink`, to move multiple links backward. |
 | `:ObsNvimRandomNote` | Open a random note from the vault. |
-| `:ObsNvimNewNote` | Create a note prefixed with `YYYY-MM-DD-`; empty names use the current timestamp. |
+| `:ObsNvimNewNote` | Create a note prefixed with `YYYY-MM-DD-`; empty names use the current timestamp. Expands `templater.note_template_name` when configured. |
 | `:ObsNvimDailyNote[!] [date]` | Open a daily note, creating it if needed. Supports `YYYY-MM-DD`, `today`, `tomorrow`, `yesterday`, `N days ago`, and `in N days`; no argument opens today. Prefix with a count, such as `:10ObsNvimDailyNote`, or pass a number, such as `:ObsNvimDailyNote 10`, to open today + N days. Add `!` to choose the date from a calendar popup. Tab completes existing daily dates. |
 | `:ObsNvimWeeklyNote` | Open this week's weekly note, creating it if needed. |
 | `:ObsNvimBacklinks` | Select from notes that link to the current note. |

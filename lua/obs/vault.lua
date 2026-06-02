@@ -72,6 +72,7 @@ end
 ---@field protected _name string
 ---@field protected _home_path obs.utils.Path
 ---@field protected _templater obs.Templater
+---@field protected _note_template_name string?
 ---@field protected _journal obs.Journal
 ---@field protected _time_provider fun(): number
 local Vault = {}
@@ -94,6 +95,7 @@ function Vault:new(opts)
     local templater = Templater:new(opts.templater)
 
     vault._templater = templater
+    vault._note_template_name = opts.templater.note_template_name
     vault._journal = Journal:new(templater, opts.journal)
     vault._time_provider = opts.time_provider
 
@@ -118,6 +120,14 @@ function Vault:create_note(name)
     ---@type obs.utils.Path
     local new_path = self._home_path / (fullname .. ".md")
     new_path:touch()
+    if self._note_template_name then
+        local templated_text = self._templater:process {
+            filename = fullname .. ".md",
+            template_name = self._note_template_name,
+        }
+        new_path:write(templated_text, "w")
+    end
+
     return File:new(new_path:expand())
 end
 

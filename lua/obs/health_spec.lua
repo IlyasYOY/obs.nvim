@@ -71,6 +71,7 @@ describe("health", function()
         it("reports vault, template, and journal details", function()
             local note = vault_home.path / "note.md"
             local daily_template = templates_home.path / "daily.md"
+            local note_template = templates_home.path / "note.md"
             local weekly_template = templates_home.path / "weekly.md"
             local idea_template = templates_home.path / "idea.md"
             local daily_note = journal_home.path / "2024-01-02.md"
@@ -78,6 +79,7 @@ describe("health", function()
 
             note:touch {}
             daily_template:touch {}
+            note_template:touch {}
             weekly_template:touch {}
             idea_template:touch {}
             daily_note:touch {}
@@ -88,6 +90,7 @@ describe("health", function()
                 vault_name = "Notes",
                 templater = {
                     home = templates_home.path:expand(),
+                    note_template_name = "note",
                 },
                 journal = {
                     home = journal_home.path:expand(),
@@ -103,7 +106,12 @@ describe("health", function()
             assert_report(reports, "ok", "Vault directory exists")
             assert_report(reports, "info", "Markdown notes: 1")
             assert_report(reports, "ok", "Templates directory exists")
-            assert_report(reports, "info", "Templates: daily, idea, weekly")
+            assert_report(
+                reports,
+                "info",
+                "Templates: daily, idea, note, weekly"
+            )
+            assert_report(reports, "ok", "New note template is available: note")
             assert_report(reports, "ok", "Daily template is available: daily")
             assert_report(reports, "ok", "Weekly template is available: weekly")
             assert_report(reports, "ok", "Journal directory exists")
@@ -142,6 +150,7 @@ describe("health", function()
                 vault_home = vault_home.path:expand(),
                 templater = {
                     home = templates_home.path:expand(),
+                    note_template_name = "note",
                 },
                 journal = {
                     home = journal_home.path:expand(),
@@ -152,6 +161,7 @@ describe("health", function()
 
             health.check()
 
+            assert_report(reports, "warn", "New note template is missing: note")
             assert_report(reports, "warn", "Daily template is missing: daily")
             assert_report(reports, "warn", "Weekly template is missing: weekly")
         end)

@@ -195,6 +195,11 @@ local function check_vault(vault)
     else
         warn "Templater is not configured"
     end
+    check_configured_template(
+        template_names,
+        vault._note_template_name,
+        "New note"
+    )
 
     local journal = vault._journal
     if journal then
