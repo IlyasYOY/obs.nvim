@@ -143,7 +143,8 @@ vim.api.nvim_create_user_command("ObsNvimDailyNote", function(args)
     end
 
     if args.bang then
-        Calendar.open(obs.vault, date_query)
+        local base = obs.vault:current_buffer_daily_date()
+        Calendar.open(obs.vault, date_query, base)
         return
     end
 

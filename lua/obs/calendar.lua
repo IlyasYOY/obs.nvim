@@ -167,9 +167,10 @@ end
 
 ---@param vault obs.Vault
 ---@param date_query string?
+---@param base_date string? YYYY-MM-DD anchor for relative queries; nil falls back to today
 ---@return obs.Calendar?
-function Calendar.open(vault, date_query)
-    local initial_date = vault:parse_daily_date(date_query)
+function Calendar.open(vault, date_query, base_date)
+    local initial_date = vault:parse_daily_date(date_query, base_date)
     if not initial_date then
         vim.notify("Invalid daily note date: " .. tostring(date_query))
         return nil

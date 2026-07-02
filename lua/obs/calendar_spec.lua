@@ -24,8 +24,9 @@ local function make_vault(opts)
         open_weekly_for = function(vault, week)
             vault.opened_week = week
         end,
-        parse_daily_date = function(vault, date_query)
+        parse_daily_date = function(vault, date_query, base_date)
             vault.parsed_query = date_query
+            vault.parsed_base = base_date
             return opts.parsed_date
         end,
     }
@@ -33,9 +34,10 @@ end
 
 ---@param vault table
 ---@param date_query string?
+---@param base_date string?
 ---@return obs.Calendar
-local function open_calendar(vault, date_query)
-    local calendar = Calendar.open(vault, date_query)
+local function open_calendar(vault, date_query, base_date)
+    local calendar = Calendar.open(vault, date_query, base_date)
     calendars[#calendars + 1] = calendar
     return calendar
 end
@@ -200,6 +202,26 @@ describe("calendar", function()
         calendar:open_selected()
 
         assert.are.equal("2024-02-15", vault.opened_date)
+    end)
+
+    it("passes base date through to the vault", function()
+        local vault = make_vault {
+            parsed_date = "2024-02-14",
+        }
+        open_calendar(vault, "in 5 days", "2024-02-14")
+
+        assert.are.equal("in 5 days", vault.parsed_query)
+        assert.are.equal("2024-02-14", vault.parsed_base)
+    end)
+
+    it("opens on the base date when no query is given", function()
+        local calendar = open_calendar(
+            make_vault { parsed_date = "2024-02-14" },
+            "",
+            "2024-02-14"
+        )
+
+        assert.are.equal("2024-02-14", calendar:selected_date())
     end)
 
     it("opens selected row weekly note through the vault", function()

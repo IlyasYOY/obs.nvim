@@ -621,4 +621,170 @@ describe("journal", function()
             assert.same({ "2024-02-14", "2024-02-15" }, result)
         end)
     end)
+
+    describe("parse daily date with base", function()
+        it("anchors relative keywords on the base date", function()
+            test_state.copy_with_opts {
+                date_provider = function()
+                    return "2024-02-14"
+                end,
+                time_provider = function()
+                    return time_for(2024, 2, 14)
+                end,
+            }
+
+            assert.are.equal(
+                "2024-02-14",
+                test_state.journal:parse_daily_date("", "2024-02-14")
+            )
+            assert.are.equal(
+                "2024-02-14",
+                test_state.journal:parse_daily_date("today", "2024-02-14")
+            )
+            assert.are.equal(
+                "2024-02-15",
+                test_state.journal:parse_daily_date("tomorrow", "2024-02-14")
+            )
+            assert.are.equal(
+                "2024-02-13",
+                test_state.journal:parse_daily_date("yesterday", "2024-02-14")
+            )
+            assert.are.equal(
+                "2024-02-19",
+                test_state.journal:parse_daily_date("in 5 days", "2024-02-14")
+            )
+            assert.are.equal(
+                "2024-02-11",
+                test_state.journal:parse_daily_date("3 days ago", "2024-02-14")
+            )
+        end)
+
+        it("keeps explicit dates absolute regardless of base", function()
+            test_state.copy_with_opts {
+                time_provider = function()
+                    return time_for(2024, 2, 14)
+                end,
+            }
+
+            assert.are.equal(
+                "2024-03-01",
+                test_state.journal:parse_daily_date("2024-03-01", "2024-02-14")
+            )
+            assert.is_nil(
+                test_state.journal:parse_daily_date("2024-02-30", "2024-02-14")
+            )
+            assert.is_nil(
+                test_state.journal:parse_daily_date("last friday", "2024-02-14")
+            )
+        end)
+
+        it("falls back to today when base is nil", function()
+            test_state.copy_with_opts {
+                date_provider = function()
+                    return "2024-02-14"
+                end,
+                time_provider = function()
+                    return time_for(2024, 2, 14)
+                end,
+            }
+
+            assert.are.equal(
+                "2024-02-14",
+                test_state.journal:parse_daily_date ""
+            )
+            assert.are.equal(
+                "2024-02-15",
+                test_state.journal:parse_daily_date "tomorrow"
+            )
+            assert.are.equal(
+                "2024-02-13",
+                test_state.journal:parse_daily_date "yesterday"
+            )
+        end)
+
+        it("falls back to today when base is invalid", function()
+            test_state.copy_with_opts {
+                date_provider = function()
+                    return "2024-02-14"
+                end,
+                time_provider = function()
+                    return time_for(2024, 2, 14)
+                end,
+            }
+
+            assert.are.equal(
+                "2024-02-15",
+                test_state.journal:parse_daily_date("tomorrow", "2024-02-30")
+            )
+        end)
+    end)
+
+    describe("current buffer daily date", function()
+        local original_buf
+        local created_bufs = {}
+
+        before_each(function()
+            original_buf = vim.api.nvim_get_current_buf()
+            created_bufs = {}
+        end)
+
+        after_each(function()
+            vim.api.nvim_set_current_buf(original_buf)
+            for _, b in ipairs(created_bufs) do
+                if vim.api.nvim_buf_is_valid(b) then
+                    vim.api.nvim_buf_delete(b, { force = true })
+                end
+            end
+        end)
+
+        local function set_current_buf_name(name)
+            local buf = vim.api.nvim_create_buf(false, true)
+            created_bufs[#created_bufs + 1] = buf
+            vim.api.nvim_set_current_buf(buf)
+            if name and name ~= "" then
+                vim.api.nvim_buf_set_name(buf, name)
+            end
+        end
+
+        it("returns date for a daily note in the journal home", function()
+            local note = test_state.journal_dir_path.path / "2024-02-14.md"
+            note:touch {}
+            set_current_buf_name(note:expand())
+
+            assert.are.equal(
+                "2024-02-14",
+                test_state.journal:current_buffer_daily_date()
+            )
+        end)
+
+        it("returns nil for a weekly note", function()
+            local note = test_state.journal_dir_path.path / "2024-W07.md"
+            note:touch {}
+            set_current_buf_name(note:expand())
+
+            assert.is_nil(test_state.journal:current_buffer_daily_date())
+        end)
+
+        it("returns nil for a non-date filename", function()
+            local note = test_state.journal_dir_path.path / "notes.md"
+            note:touch {}
+            set_current_buf_name(note:expand())
+
+            assert.is_nil(test_state.journal:current_buffer_daily_date())
+        end)
+
+        it("returns nil for a daily note outside the journal home", function()
+            local note = test_state.templates_dir_path.path / "2024-02-14.md"
+            note:touch {}
+            set_current_buf_name(note:expand())
+
+            assert.is_nil(test_state.journal:current_buffer_daily_date())
+        end)
+
+        it("returns nil when the buffer has no name", function()
+            set_current_buf_name ""
+
+            assert.is_nil(test_state.journal:current_buffer_daily_date())
+        end)
+    end)
 end)

@@ -676,9 +676,17 @@ function Vault:open_daily(date_query)
 end
 
 ---@param date_query string?
+---@param base_date string? YYYY-MM-DD anchor for relative queries; nil falls back to today
 ---@return string?
-function Vault:parse_daily_date(date_query)
-    return self._journal:parse_daily_date(date_query)
+function Vault:parse_daily_date(date_query, base_date)
+    return self._journal:parse_daily_date(date_query, base_date)
+end
+
+---Returns the YYYY-MM-DD date of the current buffer when it is a daily note
+---located directly inside the journal home; otherwise nil.
+---@return string?
+function Vault:current_buffer_daily_date()
+    return self._journal:current_buffer_daily_date()
 end
 
 ---@return string[]

@@ -99,21 +99,37 @@ local function format_relative_date(base_time, offset_days)
 end
 
 ---@param value string?
+---@param base_date string? YYYY-MM-DD anchor for relative queries; nil falls back to today
 ---@return string?
-function Journal:parse_daily_date(value)
+function Journal:parse_daily_date(value, base_date)
+    local base_time
+    if base_date then
+        local by, bm, bd = base_date:match "^(%d%d%d%d)%-(%d%d)%-(%d%d)$"
+        if by then
+            base_time =
+                validated_date_time(tonumber(by), tonumber(bm), tonumber(bd))
+        end
+    end
+
     if not value or value == "" then
+        if base_time then
+            return format_date(base_time)
+        end
         return self._date_provider()
     end
 
     local normalized = vim.trim(value):lower()
     if normalized == "" or normalized == "today" then
+        if base_time then
+            return format_date(base_time)
+        end
         return self._date_provider()
     end
     if normalized == "tomorrow" then
-        return format_relative_date(self._time_provider(), 1)
+        return format_relative_date(base_time or self._time_provider(), 1)
     end
     if normalized == "yesterday" then
-        return format_relative_date(self._time_provider(), -1)
+        return format_relative_date(base_time or self._time_provider(), -1)
     end
 
     local year, month, day = normalized:match "^(%d%d%d%d)%-(%d%d)%-(%d%d)$"
@@ -128,15 +144,40 @@ function Journal:parse_daily_date(value)
 
     local past_days = normalized:match "^(%d+)%s+days?%s+ago$"
     if past_days then
-        return format_relative_date(self._time_provider(), -tonumber(past_days))
+        return format_relative_date(
+            base_time or self._time_provider(),
+            -tonumber(past_days)
+        )
     end
 
     local future_days = normalized:match "^in%s+(%d+)%s+days?$"
     if future_days then
         return format_relative_date(
-            self._time_provider(),
+            base_time or self._time_provider(),
             tonumber(future_days)
         )
+    end
+
+    return nil
+end
+
+---Returns the YYYY-MM-DD date of the current buffer when it is a daily note
+---located directly inside the journal home; otherwise nil.
+---@return string?
+function Journal:current_buffer_daily_date()
+    local name = vim.api.nvim_buf_get_name(0)
+    if name == "" then
+        return nil
+    end
+
+    local dir = Path:new(name):parent():absolute()
+    if dir ~= self._home_path:absolute() then
+        return nil
+    end
+
+    local stem = File:new(name):name()
+    if stem and stem:match "^%d%d%d%d%-%d%d%-%d%d$" then
+        return stem
     end
 
     return nil

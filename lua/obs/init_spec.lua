@@ -286,21 +286,32 @@ describe("commands", function()
         it("opens calendar for bang without arguments", function()
             local received_vault
             local received_query
-            obs.vault = {}
-            Calendar.open = function(vault, date_query)
+            local received_base
+            obs.vault = {
+                current_buffer_daily_date = function()
+                    return nil
+                end,
+            }
+            Calendar.open = function(vault, date_query, base_date)
                 received_vault = vault
                 received_query = date_query
+                received_base = base_date
             end
 
             vim.cmd "ObsNvimDailyNote!"
 
             assert.are.equal(obs.vault, received_vault)
             assert.are.equal("", received_query)
+            assert.is_nil(received_base)
         end)
 
         it("opens calendar focused on exact date text", function()
             local received_query
-            obs.vault = {}
+            obs.vault = {
+                current_buffer_daily_date = function()
+                    return nil
+                end,
+            }
             Calendar.open = function(_, date_query)
                 received_query = date_query
             end
@@ -312,7 +323,11 @@ describe("commands", function()
 
         it("opens calendar focused on count date", function()
             local received_query
-            obs.vault = {}
+            obs.vault = {
+                current_buffer_daily_date = function()
+                    return nil
+                end,
+            }
             Calendar.open = function(_, date_query)
                 received_query = date_query
             end
@@ -320,6 +335,25 @@ describe("commands", function()
             vim.cmd "10ObsNvimDailyNote!"
 
             assert.are.equal("in 10 days", received_query)
+        end)
+
+        it("anchors calendar on the current buffer daily date", function()
+            local received_query
+            local received_base
+            obs.vault = {
+                current_buffer_daily_date = function()
+                    return "2024-02-14"
+                end,
+            }
+            Calendar.open = function(_, date_query, base_date)
+                received_query = date_query
+                received_base = base_date
+            end
+
+            vim.cmd "10ObsNvimDailyNote!"
+
+            assert.are.equal("in 10 days", received_query)
+            assert.are.equal("2024-02-14", received_base)
         end)
 
         it(
