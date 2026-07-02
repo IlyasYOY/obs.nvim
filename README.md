@@ -159,7 +159,7 @@ You can add custom variables with `templater.extra_providers`, or set
 | `:ObsNvimPrevLink[!]` | Move to the previous link in the current note. Prefix a count, such as `:3ObsNvimPrevLink`, to move multiple links backward. |
 | `:ObsNvimRandomNote` | Open a random note from the vault. |
 | `:ObsNvimNewNote` | Create a note prefixed with `YYYY-MM-DD-`; empty names use the current timestamp. Expands `templater.note_template_name` when configured. |
-| `:ObsNvimDailyNote[!] [date]` | Open a daily note, creating it if needed. Supports `YYYY-MM-DD`, `today`, `tomorrow`, `yesterday`, `N days ago`, and `in N days`; no argument opens today. Prefix with a count, such as `:10ObsNvimDailyNote`, or pass a number, such as `:ObsNvimDailyNote 10`, to open today + N days. Add `!` to choose the date from a calendar popup. Tab completes existing daily dates. |
+| `:ObsNvimDailyNote[!] [date]` | Open a daily note, creating it if needed. Supports `YYYY-MM-DD`, `today`, `tomorrow`, `yesterday`, `N days ago`, and `in N days`; no argument opens today. Prefix with a count, such as `:10ObsNvimDailyNote`, or pass a number, such as `:ObsNvimDailyNote 10`, to open today + N days. Add `!` to choose the date from a calendar popup; with `!`, relative inputs and counts step from the current buffer's date when it is a daily note (otherwise today). Tab completes existing daily dates. |
 | `:ObsNvimWeeklyNote` | Open this week's weekly note, creating it if needed. |
 | `:ObsNvimBacklinks` | Select from notes that link to the current note. |
 | `:ObsNvimTags` | Select a vault tag, then select and open a note with that tag. |
@@ -185,6 +185,10 @@ Normal-mode mappings like `<cmd>ObsNvimDailyNote<cr>` do not automatically pass
 does nothing.
 
 The daily-note calendar popup shows one month at a time with ISO week numbers.
+When opened from a daily note (`YYYY-MM-DD.md` in the journal home), the
+calendar and any relative input — `today`, `tomorrow`, `yesterday`,
+`in N days`, `N days ago`, or a count — anchor on that note's date; explicit
+`YYYY-MM-DD` dates stay absolute. From any other buffer it opens on today.
 Existing daily notes are marked with `*` on day cells, and existing weekly notes
 are marked with `*` next to the week number. Use `h`/`l` for previous/next day,
 `k`/`j` for previous/next week, `K`/`J` for previous/next month, `<CR>` to open
