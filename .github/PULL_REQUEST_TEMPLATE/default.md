@@ -1,16 +1,13 @@
----
-name: Refactoring
-about: Suggest your refactoring
-title: ''
-assignees: ''
----
+## Summary
 
-## Details
+Describe the user-visible change and why it is needed.
 
-- **issue**: -,
+## Compatibility
 
-## Description
+List command, setup, persisted-data, or Neovim-version implications.
 
-<!--
-Descriptions of the pull request. Highlight important places.
--->
+## Verification
+
+- [ ] `make check`
+- [ ] Added or updated focused tests
+- [ ] Updated README/Vim help when behavior changed

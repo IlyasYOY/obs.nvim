@@ -14,18 +14,20 @@
 ## Build/Test Commands
 - `make test` - run all specs with the local headless Neovim runner.
 - `make test-verbose` - run all specs with per-test success output.
-- `make check` - run formatting checks, luacheck, and all specs. Run this
+- `make check` - run formatting checks, luacheck, all specs, and Vim help
+  validation. Run this
   before considering GitHub issue work complete.
 - Single spec:
   `nvim --headless --noplugin -u tests/minimal_init.lua -c 'lua require("tests.runner").run({ files = { "path/to/test_spec.lua" }, verbose = true })' -c qa`
 - Before considering a feature complete, run tests against the same Neovim
   versions as CI: `make test NVIM_VERSION=v0.11.7`,
-  `make test NVIM_VERSION=v0.12.1`, and
+  `make test NVIM_VERSION=v0.12.4`, and
   `make test NVIM_VERSION=nightly`.
 - `make lint` - run luacheck and stylua checks.
 - `make lint_luacheck` - run luacheck only.
 - `make lint_stylua` - run stylua in check mode.
 - `make format` - format Lua files with stylua.
+- `make help-check` - verify `doc/obs.txt` and tracked `doc/tags` agree.
 
 ## Test Environment Notes
 - `tests/minimal_init.lua` sets an isolated runtime and XDG home under
@@ -48,8 +50,8 @@
   `---@return`.
 - Prefer early returns and explicit validation. Do not silently ignore
   user-facing failures; use `vim.notify` where the surrounding code does.
-- Keep globals limited to those allowed by `.luacheckrc` (`vim`, busted test
-  globals, `assert`, and the existing Telescope/debug globals).
+- Keep globals limited to those allowed by `.luacheckrc` (`vim`, `assert`, and
+  the dependency-free runner's test globals).
 
 ## Implementation Patterns
 - Prefer `obs.utils.path` and the local `obs.utils.file` wrapper for filesystem
@@ -71,3 +73,11 @@
   detection, candidate shape, or buffer-local attach behavior.
 - Keep changes scoped to the requested behavior; avoid broad refactors unless
   they are needed to make the fix correct.
+
+## Documentation and Release Infrastructure
+- Keep README and `doc/obs.txt` user-facing behavior aligned. Regenerate help
+  tags with `make help-tags` after changing help tags or headings.
+- Keep GitHub templates free of example values that can be mistaken for real
+  reports.
+- Releases are manual through `.github/workflows/release.yml`; never create or
+  push a tag unless the user explicitly asks.

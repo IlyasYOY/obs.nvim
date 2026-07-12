@@ -12,7 +12,16 @@ note workflows:
 - rename, move, and inspect backlinks for notes
 - copy wiki or Obsidian links for the current note
 
+## Requirements
+
+- Neovim 0.11 or newer
+- a clipboard provider for link-copy commands
+- Neovim 0.12 or newer for built-in wiki-link completion
+
 ## Installation
+
+Neovim 0.11 users should install the plugin with lazy.nvim or another plugin
+manager. Neovim's built-in `vim.pack` requires Neovim 0.12 or newer.
 
 Example installation with [folke/lazy.nvim](https://github.com/folke/lazy.nvim):
 
@@ -24,7 +33,7 @@ return {
 }
 ```
 
-Example installation with Neovim's built-in `vim.pack`:
+Example installation with Neovim 0.12+'s built-in `vim.pack`:
 
 ```lua
 vim.pack.add {
@@ -32,12 +41,7 @@ vim.pack.add {
 }
 ```
 
-## Requirements and health
-
-`obs.nvim` uses Neovim user commands, `vim.ui.select`, and `vim.ui.open`.
-A clipboard provider is needed for the link-copy commands. Wiki link completion
-requires Neovim 0.12 or newer; on older versions the rest of the plugin can
-still be configured, but completion is left disabled.
+## Health
 
 After setup, run:
 
@@ -199,3 +203,16 @@ close, and `?` to toggle mapping help.
 
 - Useful LuaSnip snippets for Obsidian are
   [here](https://github.com/IlyasYOY/dotfiles/blob/master/config/nvim/snippets/markdown.lua).
+
+Vim help is available with `:help obs.nvim`.
+
+## Development
+
+Run `make check` for the canonical non-mutating lint, test, and Vim-help
+verification. Use `make test NVIM_VERSION=v0.11.7` and
+`make test NVIM_VERSION=v0.12.4` for the supported release lines; nightly is
+an additional compatibility probe.
+
+## License
+
+Apache-2.0. See [LICENSE](LICENSE).

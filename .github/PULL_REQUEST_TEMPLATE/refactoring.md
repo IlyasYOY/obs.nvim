@@ -1,17 +1,14 @@
----
-name: Refactoring
-about: Suggest your refactoring
-title: ''
-labels: refactoring
-assignees: ''
----
+## Refactoring goal
 
-## Details
+Describe the design problem and intended internal boundary.
 
-- **idea**: -,
+## Behavior preservation
 
-## Description
+Explain how public commands, configuration, APIs, and persisted data remain
+compatible.
 
-<!--
-Descriptions of the pull request. Highlight important places.
--->
+## Verification
+
+- [ ] `make check`
+- [ ] Existing behavior is covered before structural changes
+- [ ] No unrelated formatting or API changes

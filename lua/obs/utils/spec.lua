@@ -3,6 +3,13 @@ local utils = require "obs.utils"
 
 local M = {}
 
+local function test_work_path(name)
+    local home = vim.env.OBS_TEST_WORK
+        or vim.fs.joinpath(vim.fn.getcwd(), ".test-work", "fixtures")
+    vim.fn.mkdir(home, "p")
+    return vim.fs.joinpath(home, name)
+end
+
 ---@class obs.utils.spec.Path
 ---@field public path obs.utils.Path path to the directory
 
@@ -12,7 +19,7 @@ function M.temp_file_fixture()
     local result = {}
 
     before_each(function()
-        local tmp_file_name = "/tmp/lua-" .. utils.uuid()
+        local tmp_file_name = test_work_path("lua-" .. utils.uuid())
         result.path = Path:new(tmp_file_name)
         if not result.path:touch() then
             error "cannot create temp file"
@@ -32,7 +39,7 @@ function M.temp_dir_fixture()
     local result = {}
 
     before_each(function()
-        local tmp_file_name = "/tmp/lua-" .. utils.uuid()
+        local tmp_file_name = test_work_path("lua-" .. utils.uuid())
         result.path = Path:new(tmp_file_name)
         if not result.path:mkdir() then
             error "cannot create temp file"

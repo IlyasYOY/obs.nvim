@@ -1,0 +1,96 @@
+*obs.txt*  Obsidian-like Markdown note workflows for Neovim
+*obs.nvim*
+
+===============================================================================
+CONTENTS                                                        *obs-contents*
+
+1. Introduction ................................................. |obs-intro|
+2. Setup ........................................................ |obs-setup|
+3. Commands ................................................... |obs-commands|
+4. Completion ............................................. |obs-completion|
+5. Health ...................................................... |obs-health|
+
+===============================================================================
+INTRODUCTION                                                       *obs-intro*
+
+obs.nvim manages a local Markdown vault from Neovim. It provides wiki-link,
+journal, template, tag, backlink, rename, move, and link-copy workflows.
+Neovim 0.11 or newer is required. Wiki-link completion requires Neovim 0.12.
+
+===============================================================================
+SETUP                                                               *obs-setup*
+
+>lua
+    require("obs").setup {
+        vault_home = "~/Notes",
+        vault_name = "Notes",
+        templater = {
+            home = "~/Notes/meta/templates",
+            note_template_name = "note",
+        },
+        journal = {
+            daily_template_name = "daily",
+            weekly_template_name = "weekly",
+        },
+    }
+<
+
+The complete option types are documented in lua/obs/vault.lua. Templates use
+Markdown files and support {{date}}, {{title}}, and configured extra providers.
+
+===============================================================================
+COMMANDS                                                         *obs-commands*
+
+                                                *:ObsNvimTemplate*
+:ObsNvimTemplate        Select and insert a template.
+                                                *:ObsNvimFollowLink*
+:ObsNvimFollowLink      Follow the wiki link under the cursor.
+                                                *:ObsNvimNextLink*
+:[count]ObsNvimNextLink[!]  Move forward through links; ! includes web and
+                            Markdown links.
+                                                *:ObsNvimPrevLink*
+:[count]ObsNvimPrevLink[!]  Move backward through links.
+                                                *:ObsNvimRandomNote*
+:ObsNvimRandomNote      Open a random vault note.
+                                                *:ObsNvimNewNote*
+:ObsNvimNewNote         Create a dated note.
+                                                *:ObsNvimDailyNote*
+:[count]ObsNvimDailyNote[!] [date]
+                            Open or create a daily note; ! opens the calendar.
+                                                *:ObsNvimWeeklyNote*
+:ObsNvimWeeklyNote      Open or create this week's note.
+                                                *:ObsNvimBacklinks*
+:ObsNvimBacklinks       Select a backlink to the current note.
+                                                *:ObsNvimTags*
+:ObsNvimTags            Select a vault tag and note.
+                                                *:ObsNvimTag*
+:ObsNvimTag [tag]       Open a note for a tag or the tag under the cursor.
+                                                *:ObsNvimRename*
+:ObsNvimRename          Rename the current note and matching wiki links.
+                                                *:ObsNvimMove*
+:ObsNvimMove            Move the current note inside the vault.
+                                                *:ObsNvimCopyObsidianLinkToNote*
+:ObsNvimCopyObsidianLinkToNote  Copy an Obsidian URL.
+                                                *:ObsNvimCopyWikiLinkToNote*
+:ObsNvimCopyWikiLinkToNote      Copy a wiki link.
+                                                *:ObsNvimOpenInObsidian*
+:ObsNvimOpenInObsidian  Open the current note in Obsidian.
+
+===============================================================================
+COMPLETION                                                     *obs-completion*
+
+On Neovim 0.12+, built-in completion is enabled for Markdown buffers in the
+vault. Use CTRL-X CTRL-U inside [[...]], or configure
+completion = { enabled = false } to opt out. obs.nvim does not replace
+'omnifunc' or enable 'autocomplete'.
+
+===============================================================================
+HEALTH                                                             *obs-health*
+
+Run >
+    :checkhealth obs
+<
+to inspect setup, commands, required APIs, clipboard support, vault paths,
+templates, and journal files.
+
+vim:tw=78:ts=8:noet:ft=help:norl:

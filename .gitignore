@@ -39,7 +39,8 @@ luac.out
 *.x86_64
 *.hex
 
-.tests
-.test-home
-.test-deps
+.tests/
+.test-home/
+.test-work/
+.test-deps/
 nvim.log

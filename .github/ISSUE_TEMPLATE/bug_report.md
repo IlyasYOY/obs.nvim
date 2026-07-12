@@ -1,44 +1,30 @@
 ---
 name: Bug report
-about: Create a report to help us improve
-title: ''
+about: Report reproducible incorrect behavior
+title: "bug: "
 labels: bug
-assignees: ''
+assignees: ""
 ---
 
-## Describe the bug
+## Summary
 
-<!-- 
-A clear and concise description of what the bug is. 
--->
+Describe the observed behavior and what you expected instead.
 
-## To Reproduce
+## Minimal reproduction
 
-<!-- 
-Steps to reproduce the behavior.
--->
+Provide a minimal `init.lua`, exact steps, and the smallest relevant fixture.
+Remove private paths and content.
 
-## Expected behavior
+## Health report
 
-<!-- 
-A clear and concise description of what you expected to happen.
- -->
+Paste the plugin's `:checkhealth` output in a code block.
 
-## Screenshots
+## Environment
 
-<!-- 
-If applicable, add screenshots to help explain your problem.
- -->
-
-## Versions 
-
- - OS: macos,
- - OS version: 13.3,
- - NeoVim: 0.8,
- - Version: 936ab49.
+- OS:
+- Neovim (`nvim --version`):
+- Plugin revision:
 
 ## Additional context
 
-<!-- 
-Add any other context about the problem here.
- -->
+Include logs or screenshots when they help explain the issue.

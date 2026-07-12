@@ -235,8 +235,13 @@ local function load_files(files)
 end
 
 local function default_files()
-    local files =
-        vim.fn.globpath(vim.fn.getcwd(), "lua/**/*_spec.lua", true, true)
+    local files = {}
+    for _, pattern in ipairs { "lua/**/*_spec.lua", "tests/**/*_spec.lua" } do
+        vim.list_extend(
+            files,
+            vim.fn.globpath(vim.fn.getcwd(), pattern, true, true)
+        )
+    end
     table.sort(files)
     return files
 end
@@ -259,29 +264,33 @@ local function normalize_files(files)
 end
 
 local function run_test(test)
+    local errors = {}
+    local before_ok = true
     for _, fn in ipairs(test.before_each) do
         local ok, err = xpcall(fn, debug.traceback)
         if not ok then
-            return false, err
+            errors[#errors + 1] = "before_each: " .. err
+            before_ok = false
+            break
         end
     end
 
-    local ok, err = xpcall(test.fn, debug.traceback)
+    if before_ok then
+        local ok, err = xpcall(test.fn, debug.traceback)
+        if not ok then
+            errors[#errors + 1] = err
+        end
+    end
 
     for index = #test.after_each, 1, -1 do
         local hook_ok, hook_err =
             xpcall(test.after_each[index], debug.traceback)
         if not hook_ok then
-            if ok then
-                ok = false
-                err = hook_err
-            else
-                err = err .. "\n" .. hook_err
-            end
+            errors[#errors + 1] = "after_each: " .. hook_err
         end
     end
 
-    return ok, err
+    return #errors == 0, table.concat(errors, "\n")
 end
 
 local function run_registered_tests(opts)

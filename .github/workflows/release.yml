@@ -1,0 +1,99 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Semantic version component to increment
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      ref:
+        description: Branch to release (must be the default branch)
+        required: true
+        default: main
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_REF: ${{ inputs.ref }}
+      EVENT_REF: ${{ github.ref_name }}
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+      BUMP: ${{ inputs.bump }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Require the default branch
+        run: |
+          if [[ "$EVENT_REF" != "$DEFAULT_BRANCH" || "$RELEASE_REF" != "$DEFAULT_BRANCH" ]]; then
+            echo "Dispatch and checkout refs must both be the default branch: $DEFAULT_BRANCH"
+            exit 1
+          fi
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends lua5.1 luarocks
+          sudo luarocks install luacheck 1.2.0-1
+      - name: Install StyLua
+        uses: JohnnyMorganz/stylua-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: 2.5.2
+          args: false
+      - name: Check
+        run: make check NVIM_VERSION=v0.11.7
+      - name: Compute next version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --force --tags origin
+          latest_tag="$(git tag --list 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 || true)"
+          if [[ -n "$latest_tag" ]] && [[ "$(git rev-list "${latest_tag}..HEAD" --count)" == "0" ]]; then
+            echo "No commits found after $latest_tag; refusing to create an empty release." >&2
+            exit 1
+          fi
+          version="${latest_tag#v}"
+          if [[ -z "$version" ]]; then version="0.0.0"; fi
+          IFS=. read -r major minor patch <<< "$version"
+          case "$BUMP" in
+            major) major=$((major + 1)); minor=0; patch=0 ;;
+            minor) minor=$((minor + 1)); patch=0 ;;
+            patch) patch=$((patch + 1)) ;;
+          esac
+          tag="v${major}.${minor}.${patch}"
+          if git rev-parse "$tag" >/dev/null 2>&1; then
+            echo "Tag $tag already exists." >&2
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+      - name: Tag and push
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git tag -a "$RELEASE_TAG" -m "$RELEASE_TAG"
+          git push origin "refs/tags/$RELEASE_TAG"
+      - name: Create GitHub release
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: gh release create "$RELEASE_TAG" --verify-tag --generate-notes --title "$RELEASE_TAG"

@@ -16,40 +16,33 @@ concurrency:
 
 jobs:
   lint:
-    name: Lint
+    name: Lint and help
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends build-essential lua5.1 luarocks
-
-      - name: Install Lua dependencies
+          sudo apt-get install -y --no-install-recommends lua5.1 luarocks neovim
+      - name: Install Luacheck
         run: sudo luarocks install luacheck 1.2.0-1
-
       - name: Install StyLua
         uses: JohnnyMorganz/stylua-action@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          version: 2.3.1
+          version: 2.5.2
           args: false
-
-      - name: Check formatting
-        run: make format-check
-
       - name: Lint
-        run: make lint_luacheck
+        run: make lint
+      - name: Check Vim help
+        run: make help-check
 
   test:
     name: Test ${{ matrix.os }} / Neovim ${{ matrix.nvim_version }}
     needs: lint
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.experimental }}
-
     strategy:
       fail-fast: false
       matrix:
@@ -58,7 +51,7 @@ jobs:
           - macos-latest
         nvim_version:
           - v0.11.7
-          - v0.12.1
+          - v0.12.4
         experimental:
           - false
         include:
@@ -68,28 +61,14 @@ jobs:
           - os: macos-latest
             nvim_version: nightly
             experimental: true
-
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
-      - name: Install Linux dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends build-essential
-
-      - name: Restore test dependency cache
+      - name: Restore stable Neovim cache
         if: ${{ !matrix.experimental }}
         uses: actions/cache@v5
         with:
           path: .test-deps
-          key: >-
-            ${{ runner.os }}-${{ runner.arch }}-nvim-${{ matrix.nvim_version }}-${{
-            hashFiles('Makefile')
-            }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-nvim-${{ matrix.nvim_version }}-
-
+          key: ${{ runner.os }}-${{ runner.arch }}-nvim-${{ matrix.nvim_version }}-${{ hashFiles('Makefile') }}
       - name: Test
         run: make test NVIM_VERSION=${{ matrix.nvim_version }}
