@@ -210,7 +210,7 @@ Vim help is available with `:help obs.nvim`.
 
 Run `make check` for the canonical non-mutating lint, test, and Vim-help
 verification. Use `make test NVIM_VERSION=v0.11.7` and
-`make test NVIM_VERSION=v0.12.4` for the supported release lines; nightly is
+`make test NVIM_VERSION=v0.12.5` for the supported release lines; nightly is
 an additional compatibility probe.
 
 ## License
