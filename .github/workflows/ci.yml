@@ -51,7 +51,7 @@ jobs:
           - macos-latest
         nvim_version:
           - v0.11.7
-          - v0.12.4
+          - v0.12.5
         experimental:
           - false
         include:

@@ -21,7 +21,7 @@
   `nvim --headless --noplugin -u tests/minimal_init.lua -c 'lua require("tests.runner").run({ files = { "path/to/test_spec.lua" }, verbose = true })' -c qa`
 - Before considering a feature complete, run tests against the same Neovim
   versions as CI: `make test NVIM_VERSION=v0.11.7`,
-  `make test NVIM_VERSION=v0.12.4`, and
+  `make test NVIM_VERSION=v0.12.5`, and
   `make test NVIM_VERSION=nightly`.
 - `make lint` - run luacheck and stylua checks.
 - `make lint_luacheck` - run luacheck only.
