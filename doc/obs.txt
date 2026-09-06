@@ -85,7 +85,11 @@ COMPLETION                                                     *obs-completion*
 On Neovim 0.12+, built-in completion is enabled for Markdown buffers in the
 vault. Use CTRL-X CTRL-U inside [[...]], or configure
 completion = { enabled = false } to opt out. obs.nvim does not replace
-'omnifunc' or enable 'autocomplete'.
+'omnifunc' or enable 'autocomplete'. Inside an existing link, candidates are
+bare note names. Completing one replaces the entire note name, including text
+to the right of the cursor, while preserving the closing ]] and any |alias or
+#heading. For an incomplete link without that boundary, the closing ]] is
+added as before.
 
 ===============================================================================
 HEALTH                                                             *obs-health*

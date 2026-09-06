@@ -135,7 +135,11 @@ template.
 
 Wiki link completion requires Neovim 0.12 or newer and is enabled by default
 for Markdown notes inside the vault. It completes note names inside `[[...]]`
-with Neovim's built-in completion:
+with Neovim's built-in completion. Inside an existing link, candidates are
+bare note names. Completing a candidate replaces the entire note name,
+including text to the right of the cursor, while preserving the closing
+`]]` and any `|alias` or `#heading`. For an incomplete
+link without that boundary, the closing `]]` is added as before.
 
 - use `CTRL-X CTRL-U` to trigger it manually
 - set `vim.opt.autocomplete = true` in your config for Neovim's built-in

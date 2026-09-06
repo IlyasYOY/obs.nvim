@@ -20,6 +20,15 @@ M.complete_source = "F" .. M.completefunc_option
 ---@field public start_col number
 ---@field public base string
 ---@field public append_closing_brackets boolean
+---@field public name_tail string
+
+---@class obs.CompletionReplacement
+---@field public bufnr number
+---@field public row number one-based row
+---@field public start_col number zero-based byte column
+---@field public prefix string
+---@field public suffix string
+---@field public name_tail string
 
 ---@type obs.Vault?
 M._vault = nil
@@ -108,12 +117,23 @@ function M._find_wiki_link_context(line, cursor_col)
         return nil
     end
 
+    local boundary_start
+    local boundary_token
+    for _, token in ipairs { "]]", "|", "#", "[[" } do
+        local position = string.find(suffix, token, 1, true)
+        if position and (not boundary_start or position < boundary_start) then
+            boundary_start = position
+            boundary_token = token
+        end
+    end
+    local has_boundary = boundary_start ~= nil and boundary_token ~= "[["
+
     return {
         start_col = open_end,
         base = base,
-        append_closing_brackets = string.sub(suffix, 1, 2) ~= "]]"
-            and string.sub(suffix, 1, 1) ~= "|"
-            and string.sub(suffix, 1, 1) ~= "#",
+        append_closing_brackets = not has_boundary,
+        name_tail = has_boundary and string.sub(suffix, 1, boundary_start - 1)
+            or "",
     }
 end
 
@@ -168,7 +188,7 @@ function M.completefunc(findstart, base)
         }
     end
 
-    local _, cursor_col = unpack(vim.api.nvim_win_get_cursor(0))
+    local row, cursor_col = unpack(vim.api.nvim_win_get_cursor(0))
     local line = vim.api.nvim_get_current_line()
     local context = M._find_wiki_link_context(line, cursor_col)
 
@@ -190,10 +210,81 @@ function M.completefunc(findstart, base)
         }
     end
 
+    local words = complete_notes(base, context.append_closing_brackets)
+    if context.name_tail ~= "" then
+        ---@type obs.CompletionReplacement
+        local replacement = {
+            bufnr = vim.api.nvim_get_current_buf(),
+            row = row,
+            start_col = context.start_col,
+            prefix = string.sub(line, 1, context.start_col),
+            suffix = string.sub(line, cursor_col + 1),
+            name_tail = context.name_tail,
+        }
+        for _, item in ipairs(words) do
+            item.user_data = { obs_nvim = replacement }
+        end
+    end
+
     return {
-        words = complete_notes(base, context.append_closing_brackets),
+        words = words,
         refresh = "always",
     }
+end
+
+---@param item table completed item from v:completed_item
+---@param reason string completion reason from v:event
+function M._on_complete_done(item, reason)
+    if
+        not M._enabled
+        or reason == "cancel"
+        or type(item.word) ~= "string"
+        or item.word == ""
+        or type(item.user_data) ~= "table"
+    then
+        return
+    end
+
+    ---@type obs.CompletionReplacement?
+    local replacement = item.user_data.obs_nvim
+    if
+        type(replacement) ~= "table"
+        or replacement.bufnr ~= vim.api.nvim_get_current_buf()
+        or type(replacement.prefix) ~= "string"
+        or type(replacement.suffix) ~= "string"
+        or type(replacement.name_tail) ~= "string"
+        or replacement.name_tail == ""
+        or replacement.start_col ~= #replacement.prefix
+        or not is_note_buffer(M._vault, replacement.bufnr)
+        or not vim.bo.modifiable
+    then
+        return
+    end
+
+    local row, cursor_col = unpack(vim.api.nvim_win_get_cursor(0))
+    if
+        row ~= replacement.row
+        or cursor_col ~= replacement.start_col + #item.word
+        or vim.api.nvim_get_current_line() ~= replacement.prefix .. item.word .. replacement.suffix
+        or string.sub(replacement.suffix, 1, #replacement.name_tail)
+            ~= replacement.name_tail
+    then
+        return
+    end
+
+    -- A kept selection also reports "discard" on Escape or continued typing.
+    -- Join the cleanup to its insertion so undo never restores a partial link.
+    if not pcall(vim.cmd.undojoin) then
+        return
+    end
+    vim.api.nvim_buf_set_text(
+        replacement.bufnr,
+        row - 1,
+        cursor_col,
+        row - 1,
+        cursor_col + #replacement.name_tail,
+        {}
+    )
 end
 
 ---@param bufnr number?
@@ -249,6 +340,12 @@ function M.setup(vault, opts)
     end
 
     local group = vim.api.nvim_create_augroup(augroup_name, { clear = true })
+    vim.api.nvim_create_autocmd("CompleteDone", {
+        group = group,
+        callback = function()
+            M._on_complete_done(vim.v.completed_item, vim.v.event.reason)
+        end,
+    })
     vim.api.nvim_create_autocmd({ "BufEnter", "BufWinEnter", "FileType" }, {
         group = group,
         callback = function(args)
