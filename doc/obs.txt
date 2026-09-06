@@ -68,7 +68,10 @@ COMMANDS                                                         *obs-commands*
                                                 *:ObsNvimRename*
 :ObsNvimRename          Rename the current note and matching wiki links.
                                                 *:ObsNvimMove*
-:ObsNvimMove            Move the current note inside the vault.
+:ObsNvimMove            Move the current note inside the vault. If a note with
+                        the same name already exists in the destination, the
+                        move is rejected with a notification and the source
+                        is preserved.
                                                 *:ObsNvimCopyObsidianLinkToNote*
 :ObsNvimCopyObsidianLinkToNote  Copy an Obsidian URL.
                                                 *:ObsNvimCopyWikiLinkToNote*

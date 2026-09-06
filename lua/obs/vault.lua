@@ -150,6 +150,12 @@ function Vault:find_directory_and_move_current_note()
     }, function(choice)
         if choice then
             local destination = Path:new(choice) / current_note_filename
+            if destination:exists() then
+                vim.notify(
+                    "Destination already exists: " .. destination:expand()
+                )
+                return
+            end
             local from_file = File:new(current_note_fullpath)
             from_file:copy(destination:expand())
             vim.cmd(current_buf .. "bdelete")

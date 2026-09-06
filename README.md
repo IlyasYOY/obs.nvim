@@ -169,7 +169,7 @@ You can add custom variables with `templater.extra_providers`, or set
 | `:ObsNvimTags` | Select a vault tag, then select and open a note with that tag. |
 | `:ObsNvimTag [tag]` | Select and open a note with the provided tag, or the tag under the cursor. |
 | `:ObsNvimRename` | Rename the current note and update matching wiki links. |
-| `:ObsNvimMove` | Select a vault directory and move the current note there. |
+| `:ObsNvimMove` | Select a vault directory and move the current note there. If a note with the same name already exists in the destination, the move is rejected with a notification and the source is preserved. |
 | `:ObsNvimCopyObsidianLinkToNote` | Copy an Obsidian URL for the current note. |
 | `:ObsNvimCopyWikiLinkToNote` | Copy a `[[wiki link]]` for the current note. |
 | `:ObsNvimOpenInObsidian` | Open the current note in Obsidian. |

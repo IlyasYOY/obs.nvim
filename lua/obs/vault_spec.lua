@@ -831,6 +831,119 @@ describe("copy current note link", function()
     end)
 end)
 
+describe("move current note", function()
+    local state = vault_fixture()
+    local original_select
+    local original_notify
+    local notifications
+    local source
+    local source_buf
+    local destination
+
+    before_each(function()
+        vim.cmd "silent! %bwipeout!"
+        original_select = vim.ui.select
+        original_notify = vim.notify
+        notifications = {}
+        vim.notify = function(message)
+            notifications[#notifications + 1] = message
+        end
+        source = state.create_file "a/note.md"
+        source:write "source content"
+        source:edit()
+        source_buf = vim.api.nvim_get_current_buf()
+        local folder = state.home / "b"
+        folder:mkdir()
+        destination = File:new(folder / "note.md")
+        vim.ui.select = function(_, _, callback)
+            callback(folder:expand())
+        end
+    end)
+
+    after_each(function()
+        vim.ui.select = original_select
+        vim.notify = original_notify
+        vim.cmd "silent! %bwipeout!"
+    end)
+
+    local function assert_source_preserved()
+        assert.are.equal("source content", source:read())
+        assert.are.equal(source_buf, vim.api.nvim_get_current_buf())
+        assert.is_true(vim.api.nvim_buf_is_loaded(source_buf))
+        assert.are.equal(source:path(), vim.api.nvim_buf_get_name(source_buf))
+    end
+
+    it(
+        "rejects an existing destination without changing either note",
+        function()
+            destination:write "destination content"
+
+            state.vault:find_directory_and_move_current_note()
+
+            assert_source_preserved()
+            assert.are.equal("destination content", destination:read())
+            assert.same(
+                { "source content" },
+                vim.api.nvim_buf_get_lines(source_buf, 0, -1, false)
+            )
+            assert.same({
+                "Destination already exists: " .. destination:path(),
+            }, notifications)
+        end
+    )
+
+    it("preserves unsaved changes when the destination exists", function()
+        destination:write "destination content"
+        vim.api.nvim_buf_set_lines(source_buf, 0, -1, false, {
+            "unsaved content",
+        })
+
+        state.vault:find_directory_and_move_current_note()
+
+        assert_source_preserved()
+        assert.are.equal("destination content", destination:read())
+        assert.same(
+            { "unsaved content" },
+            vim.api.nvim_buf_get_lines(source_buf, 0, -1, false)
+        )
+        assert.is_true(vim.bo[source_buf].modified)
+    end)
+
+    it("moves to an unused destination", function()
+        state.vault:find_directory_and_move_current_note()
+
+        assert.is_false(source:exists())
+        assert.are.equal("source content", destination:read())
+        assert.are.equal(destination:path(), vim.api.nvim_buf_get_name(0))
+        assert.same({}, notifications)
+    end)
+
+    it("rejects moving into the current folder", function()
+        vim.ui.select = function(_, _, callback)
+            callback((state.home / "a"):expand())
+        end
+
+        state.vault:find_directory_and_move_current_note()
+
+        assert_source_preserved()
+        assert.same({
+            "Destination already exists: " .. source:path(),
+        }, notifications)
+    end)
+
+    it("preserves the source when selection is cancelled", function()
+        vim.ui.select = function(_, _, callback)
+            callback(nil)
+        end
+
+        state.vault:find_directory_and_move_current_note()
+
+        assert_source_preserved()
+        assert.is_false(destination:exists())
+        assert.same({}, notifications)
+    end)
+end)
+
 describe("rename", function()
     local state = vault_fixture()
 
