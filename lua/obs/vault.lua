@@ -191,8 +191,14 @@ function Vault:rename(name, new_name)
         return
     end
 
+    local updates = self:_prepare_link_updates(name, new_name)
+    if not updates then
+        return
+    end
+
+    local old_path = note:path()
     note:change_name(new_name .. ".md")
-    self:_update_links_in_notes(name, new_name)
+    self:_update_links_in_notes(updates, old_path, destination:expand())
 
     return self:get_note(new_name)
 end
@@ -274,6 +280,27 @@ local function replace_note_links(note_text, old_note_name, new_note_name)
     return note_text, links_counter
 end
 
+---Refresh Neovim's file metadata without saving or discarding buffer edits.
+---@param buf integer
+---@param lines string[]
+---@param modified boolean
+local function refresh_note_buffer(buf, lines, modified)
+    vim.api.nvim_buf_call(buf, function()
+        local view = vim.fn.winsaveview()
+        local ok, err =
+            pcall(vim.cmd, "silent keepalt keepjumps noautocmd edit!")
+        local disk_lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+        if not vim.deep_equal(lines, disk_lines) then
+            vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+        end
+        vim.bo[buf].modified = modified
+        vim.fn.winrestview(view)
+        if not ok then
+            error(err)
+        end
+    end)
+end
+
 ---Renames current working note (if it's note)
 function Vault:rename_current_note()
     self:run_if_note(function()
@@ -302,27 +329,11 @@ function Vault:rename_current_note()
         if result then
             local lines = vim.api.nvim_buf_get_lines(current_buf, 0, -1, false)
             local modified = vim.bo[current_buf].modified
-            local view = vim.fn.winsaveview()
-            for index, line in ipairs(lines) do
-                lines[index] = replace_note_links(line, old_name, new_name)
-            end
             vim.api.nvim_buf_set_name(current_buf, result:path())
             -- Re-read the renamed file to clear Neovim's "not edited" flag;
             -- otherwise a normal :write fails with E13. Restore unsaved text
             -- even if re-reading fails, without writing it to disk.
-            local ok, err = pcall(vim.api.nvim_buf_call, current_buf, function()
-                vim.cmd "silent keepalt keepjumps noautocmd edit!"
-            end)
-            local disk_lines =
-                vim.api.nvim_buf_get_lines(current_buf, 0, -1, false)
-            if not vim.deep_equal(lines, disk_lines) then
-                vim.api.nvim_buf_set_lines(current_buf, 0, -1, false, lines)
-            end
-            vim.bo[current_buf].modified = modified
-            vim.fn.winrestview(view)
-            if not ok then
-                error(err)
-            end
+            refresh_note_buffer(current_buf, lines, modified)
         end
     end)
 end
@@ -340,31 +351,92 @@ function Vault:open_random_note()
     random_note:edit()
 end
 
----this function is meant to be used from rename API. It goes throgh links in vault and upates them.
+---@class obs.LinkUpdates
+---@field files { note: obs.utils.File, text: string }[]
+---@field buffers { bufnr: integer, path: string, lines: string[], modified: boolean, refresh: boolean }[]
+---@field links_counter integer
+
+---Prepare disk and buffer replacements before mutating any note.
 ---@param old_note_name string
 ---@param new_note_name string
-function Vault:_update_links_in_notes(old_note_name, new_note_name)
-    local links_counter = 0
-    local files_counter = 0
-    for _, note in ipairs(self:list_notes()) do
-        local note_text = note:read()
-        local full_updated_counter
-        note_text, full_updated_counter =
-            replace_note_links(note_text, old_note_name, new_note_name)
+---@return obs.LinkUpdates?
+function Vault:_prepare_link_updates(old_note_name, new_note_name)
+    ---@type obs.LinkUpdates
+    local updates = { files = {}, buffers = {}, links_counter = 0 }
+    local buffers_by_path = {}
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        local name = vim.api.nvim_buf_get_name(buf)
+        if vim.api.nvim_buf_is_loaded(buf) and name ~= "" then
+            local path = Path:new(name):expand()
+            buffers_by_path[path] = buffers_by_path[path] or {}
+            table.insert(buffers_by_path[path], buf)
+        end
+    end
 
-        if full_updated_counter ~= 0 then
-            files_counter = files_counter + 1
-            links_counter = links_counter + full_updated_counter
+    for _, note in ipairs(self:list_notes()) do
+        local text, count =
+            replace_note_links(note:read(), old_note_name, new_note_name)
+        if count ~= 0 then
+            table.insert(updates.files, { note = note, text = text })
+            updates.links_counter = updates.links_counter + count
         end
 
-        note:write(note_text, "w")
+        for _, buf in ipairs(buffers_by_path[note:path()] or {}) do
+            local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+            local changed = false
+            for index, line in ipairs(lines) do
+                local updated =
+                    replace_note_links(line, old_note_name, new_note_name)
+                changed = changed or updated ~= line
+                lines[index] = updated
+            end
+            if changed or count ~= 0 then
+                if not vim.bo[buf].modifiable then
+                    vim.notify(
+                        "Backlink buffer is not modifiable: " .. note:path()
+                    )
+                    return nil
+                end
+                table.insert(updates.buffers, {
+                    bufnr = buf,
+                    path = note:path(),
+                    lines = lines,
+                    modified = vim.bo[buf].modified,
+                    refresh = count ~= 0,
+                })
+            end
+        end
+    end
+
+    return updates
+end
+
+---Apply prepared replacements, accounting for the renamed file's new path.
+---@param updates obs.LinkUpdates
+---@param old_path string
+---@param new_path string
+function Vault:_update_links_in_notes(updates, old_path, new_path)
+    for _, update in ipairs(updates.files) do
+        local note = update.note
+        if note:path() == old_path then
+            note = File:new(new_path)
+        end
+        note:write(update.text, "w")
+    end
+    for _, update in ipairs(updates.buffers) do
+        if update.refresh and update.path ~= old_path then
+            refresh_note_buffer(update.bufnr, update.lines, update.modified)
+        else
+            vim.api.nvim_buf_set_lines(update.bufnr, 0, -1, false, update.lines)
+            vim.bo[update.bufnr].modified = update.modified
+        end
     end
 
     vim.notify(
         string.format(
             "updated %d links and %d files",
-            links_counter,
-            files_counter
+            updates.links_counter,
+            #updates.files
         )
     )
 end

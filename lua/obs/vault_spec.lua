@@ -1068,6 +1068,129 @@ describe("rename current note", function()
         assert.is_false(source:exists())
     end)
 
+    for _, api in ipairs { "command", "rename" } do
+        for _, modified in ipairs { true, false } do
+            it(
+                "updates loaded backlinks via "
+                    .. api
+                    .. " modified="
+                    .. tostring(modified),
+                function()
+                    local backlink = state.create_file "backlink.md"
+                    backlink:write "[[test]] [[test|label]] [[test#heading]]\n"
+                    local buf = vim.fn.bufadd(backlink:path())
+                    vim.fn.bufload(buf)
+                    if modified then
+                        vim.api.nvim_buf_set_lines(buf, 1, -1, false, {
+                            "unsaved text [[test#extra|label]]",
+                        })
+                    end
+
+                    if api == "command" then
+                        state.vault:rename_current_note()
+                        assert_renamed_buffer()
+                    else
+                        assert(state.vault:rename("test", "new test"))
+                    end
+
+                    local expected = {
+                        "[[new test]] [[new test|label]] [[new test#heading]]",
+                    }
+                    if modified then
+                        expected[#expected + 1] =
+                            "unsaved text [[new test#extra|label]]"
+                    end
+                    assert.same(
+                        expected,
+                        vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+                    )
+                    assert.are.equal(modified, vim.bo[buf].modified)
+                    assert.are.equal(expected[1] .. "\n", backlink:read())
+                    vim.api.nvim_buf_call(buf, function()
+                        vim.cmd "write"
+                    end)
+                    assert.are.equal(
+                        table.concat(expected, "\n") .. "\n",
+                        backlink:read()
+                    )
+                end
+            )
+        end
+    end
+
+    it("migrates buffer-only links without restoring deleted links", function()
+        local added = state.create_file "added.md"
+        added:write "saved text\n"
+        local removed = state.create_file "removed.md"
+        removed:write "[[test]]\n"
+        local added_buf = vim.fn.bufadd(added:path())
+        local removed_buf = vim.fn.bufadd(removed:path())
+        vim.fn.bufload(added_buf)
+        vim.fn.bufload(removed_buf)
+        vim.api.nvim_buf_set_lines(
+            added_buf,
+            1,
+            -1,
+            false,
+            { "[[test|label]] [[test#heading]]" }
+        )
+        vim.api.nvim_buf_set_lines(
+            removed_buf,
+            0,
+            -1,
+            false,
+            { "link removed" }
+        )
+
+        state.vault:rename_current_note()
+
+        assert.same(
+            { "saved text", "[[new test|label]] [[new test#heading]]" },
+            vim.api.nvim_buf_get_lines(added_buf, 0, -1, false)
+        )
+        assert.same(
+            { "link removed" },
+            vim.api.nvim_buf_get_lines(removed_buf, 0, -1, false)
+        )
+        assert.is_true(vim.bo[added_buf].modified)
+        assert.is_true(vim.bo[removed_buf].modified)
+        assert.are.equal("saved text\n", added:read())
+        assert.are.equal("[[new test]]\n", removed:read())
+        for _, buf in ipairs { added_buf, removed_buf } do
+            vim.api.nvim_buf_call(buf, function()
+                vim.cmd "write"
+            end)
+        end
+        assert.are.equal(
+            "saved text\n[[new test|label]] [[new test#heading]]\n",
+            added:read()
+        )
+        assert.are.equal("link removed\n", removed:read())
+    end)
+
+    it("rejects nonmodifiable backlinks before any mutation", function()
+        local backlink = state.create_file "backlink.md"
+        backlink:write "[[test]]\n"
+        local buf = vim.fn.bufadd(backlink:path())
+        vim.fn.bufload(buf)
+        vim.api.nvim_buf_set_lines(buf, 1, -1, false, { "unsaved text" })
+        vim.bo[buf].modifiable = false
+
+        state.vault:rename_current_note()
+
+        assert.is_true(source:exists())
+        assert.is_false(destination:exists())
+        assert.are.equal("[[test]]\n", backlink:read())
+        assert.same(
+            { "[[test]]", "unsaved text" },
+            vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+        )
+        assert.is_true(vim.bo[buf].modified)
+        assert.are.equal(source:path(), vim.api.nvim_buf_get_name(source_buf))
+        assert.are.equal(1, #notifications)
+        assert(notifications[1]:find("not modifiable", 1, true))
+    end)
+
     it("allows a destination that partially matches another buffer", function()
         vim.fn.bufadd(destination:path() .. ".bak")
 
@@ -1102,6 +1225,11 @@ describe("rename current note", function()
                 end
                 local backlink = state.create_file "backlink.md"
                 backlink:write "[[test]]"
+                local backlink_buf = vim.fn.bufadd(backlink:path())
+                vim.fn.bufload(backlink_buf)
+                vim.api.nvim_buf_set_lines(backlink_buf, 1, -1, false, {
+                    "unsaved [[test|label]]",
+                })
                 vim.api.nvim_buf_set_lines(
                     source_buf,
                     0,
@@ -1124,6 +1252,11 @@ describe("rename current note", function()
                 assert.is_true(vim.bo[source_buf].modified)
                 assert.are.equal("saved text\n", source:read())
                 assert.are.equal("[[test]]", backlink:read())
+                assert.same(
+                    { "[[test]]", "unsaved [[test|label]]" },
+                    vim.api.nvim_buf_get_lines(backlink_buf, 0, -1, false)
+                )
+                assert.is_true(vim.bo[backlink_buf].modified)
                 assert.are.equal(1, #notifications)
                 if other_buf then
                     assert.is_false(destination:exists())
