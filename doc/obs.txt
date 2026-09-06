@@ -66,7 +66,11 @@ COMMANDS                                                         *obs-commands*
                                                 *:ObsNvimTag*
 :ObsNvimTag [tag]       Open a note for a tag or the tag under the cursor.
                                                 *:ObsNvimRename*
-:ObsNvimRename          Rename the current note and matching wiki links.
+:ObsNvimRename          Rename the current note and matching wiki links. The
+                        current buffer stays open with unsaved edits and is
+                        associated with the new path; write it explicitly to
+                        save. A destination already open in another buffer is
+                        rejected before files or links are changed.
                                                 *:ObsNvimMove*
 :ObsNvimMove            Move the current note inside the vault. If a note with
                         the same name already exists in the destination, the

@@ -248,25 +248,83 @@ function Vault:open_obsidian_link_to_current_note()
     end
 end
 
+local function escape_magic(s)
+    return (s:gsub("[%^%$%(%)%%%.%[%]%*%+%-%?]", "%%%1"))
+end
+
+---@param note_text string
+---@param old_note_name string
+---@param new_note_name string
+---@return string
+---@return integer
+local function replace_note_links(note_text, old_note_name, new_note_name)
+    old_note_name = escape_magic(old_note_name)
+    local links_counter = 0
+    for _, suffix in ipairs { "]]", "|", "#" } do
+        local updated_count
+        note_text, updated_count = string.gsub(
+            note_text,
+            "%[%[" .. old_note_name .. escape_magic(suffix),
+            function()
+                return "[[" .. new_note_name .. suffix
+            end
+        )
+        links_counter = links_counter + updated_count
+    end
+    return note_text, links_counter
+end
+
 ---Renames current working note (if it's note)
 function Vault:rename_current_note()
     self:run_if_note(function()
+        local current_buf = vim.api.nvim_get_current_buf()
         local old_name = vim.fn.expand "%:t:r"
-        local result = self:rename(
-            old_name,
-            vim.fn.input {
-                prompt = "New name: ",
-                default = old_name,
-            }
-        )
+        local new_name = vim.fn.input {
+            prompt = "New name: ",
+            default = old_name,
+        }
+        local destination = Path:new(vim.api.nvim_buf_get_name(current_buf))
+            :parent() / (new_name .. ".md")
+        for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+            if
+                buf ~= current_buf
+                and vim.api.nvim_buf_get_name(buf) == destination:expand()
+            then
+                vim.notify(
+                    "Destination already open in another buffer: "
+                        .. destination:expand()
+                )
+                return
+            end
+        end
+
+        local result = self:rename(old_name, new_name)
         if result then
-            result:edit()
+            local lines = vim.api.nvim_buf_get_lines(current_buf, 0, -1, false)
+            local modified = vim.bo[current_buf].modified
+            local view = vim.fn.winsaveview()
+            for index, line in ipairs(lines) do
+                lines[index] = replace_note_links(line, old_name, new_name)
+            end
+            vim.api.nvim_buf_set_name(current_buf, result:path())
+            -- Re-read the renamed file to clear Neovim's "not edited" flag;
+            -- otherwise a normal :write fails with E13. Restore unsaved text
+            -- even if re-reading fails, without writing it to disk.
+            local ok, err = pcall(vim.api.nvim_buf_call, current_buf, function()
+                vim.cmd "silent keepalt keepjumps noautocmd edit!"
+            end)
+            local disk_lines =
+                vim.api.nvim_buf_get_lines(current_buf, 0, -1, false)
+            if not vim.deep_equal(lines, disk_lines) then
+                vim.api.nvim_buf_set_lines(current_buf, 0, -1, false, lines)
+            end
+            vim.bo[current_buf].modified = modified
+            vim.fn.winrestview(view)
+            if not ok then
+                error(err)
+            end
         end
     end)
-end
-
-local function escape_magic(s)
-    return (s:gsub("[%^%$%(%)%%%.%[%]%*%+%-%?]", "%%%1"))
 end
 
 ---opens random note from the vault.
@@ -288,38 +346,11 @@ end
 function Vault:_update_links_in_notes(old_note_name, new_note_name)
     local links_counter = 0
     local files_counter = 0
-    old_note_name = escape_magic(old_note_name)
     for _, note in ipairs(self:list_notes()) do
         local note_text = note:read()
-        local updated_count
-        local full_updated_counter = 0
-
-        note_text, updated_count = string.gsub(
-            note_text,
-            "%[%[" .. old_note_name .. "%]%]",
-            function()
-                return "[[" .. new_note_name .. "]]"
-            end
-        )
-        full_updated_counter = full_updated_counter + updated_count
-
-        note_text, updated_count = string.gsub(
-            note_text,
-            "%[%[" .. old_note_name .. "%|",
-            function()
-                return "[[" .. new_note_name .. "|"
-            end
-        )
-        full_updated_counter = full_updated_counter + updated_count
-
-        note_text, updated_count = string.gsub(
-            note_text,
-            "%[%[" .. old_note_name .. "#",
-            function()
-                return "[[" .. new_note_name .. "#"
-            end
-        )
-        full_updated_counter = full_updated_counter + updated_count
+        local full_updated_counter
+        note_text, full_updated_counter =
+            replace_note_links(note_text, old_note_name, new_note_name)
 
         if full_updated_counter ~= 0 then
             files_counter = files_counter + 1

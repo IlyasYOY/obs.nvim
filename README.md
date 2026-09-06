@@ -172,7 +172,7 @@ You can add custom variables with `templater.extra_providers`, or set
 | `:ObsNvimBacklinks` | Select from notes that link to the current note. |
 | `:ObsNvimTags` | Select a vault tag, then select and open a note with that tag. |
 | `:ObsNvimTag [tag]` | Select and open a note with the provided tag, or the tag under the cursor. |
-| `:ObsNvimRename` | Rename the current note and update matching wiki links. |
+| `:ObsNvimRename` | Rename the current note and update matching wiki links. The current buffer stays open with its unsaved edits and is associated with the new path; write it explicitly to save. If the destination is already open in another buffer, the rename is rejected before changing files or links. |
 | `:ObsNvimMove` | Select a vault directory and move the current note there. If a note with the same name already exists in the destination, the move is rejected with a notification and the source is preserved. |
 | `:ObsNvimCopyObsidianLinkToNote` | Copy an Obsidian URL for the current note. |
 | `:ObsNvimCopyWikiLinkToNote` | Copy a `[[wiki link]]` for the current note. |

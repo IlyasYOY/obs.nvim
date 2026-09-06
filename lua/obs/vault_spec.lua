@@ -944,6 +944,202 @@ describe("move current note", function()
     end)
 end)
 
+describe("rename current note", function()
+    local state = vault_fixture()
+    local original_input
+    local original_notify
+    local original_hidden
+    local notifications
+    local source
+    local source_buf
+    local destination
+
+    before_each(function()
+        vim.cmd "silent! %bwipeout!"
+        original_input = vim.fn.input
+        original_notify = vim.notify
+        original_hidden = vim.o.hidden
+        notifications = {}
+        vim.notify = function(message)
+            notifications[#notifications + 1] = message
+        end
+        vim.fn.input = function()
+            return "new test"
+        end
+        source = state.create_file "test.md"
+        source:write "saved text\n"
+        source:edit()
+        vim.bo.filetype = "markdown"
+        source_buf = vim.api.nvim_get_current_buf()
+        destination = File:new(state.home / "new test.md")
+    end)
+
+    after_each(function()
+        vim.fn.input = original_input
+        vim.notify = original_notify
+        vim.o.hidden = original_hidden
+        vim.cmd "silent! %bwipeout!"
+    end)
+
+    local function assert_renamed_buffer()
+        assert.are.equal(source_buf, vim.api.nvim_get_current_buf())
+        assert.are.equal(
+            destination:path(),
+            vim.api.nvim_buf_get_name(source_buf)
+        )
+        assert.is_false(source:exists())
+        assert.is_true(destination:exists())
+    end
+
+    for _, hidden in ipairs { true, false } do
+        it(
+            "preserves edits through write with hidden=" .. tostring(hidden),
+            function()
+                vim.o.hidden = hidden
+                local lines = { "saved text", "unsaved edit" }
+                vim.api.nvim_buf_set_lines(source_buf, 0, -1, false, lines)
+
+                state.vault:rename_current_note()
+
+                assert_renamed_buffer()
+                assert.same(
+                    lines,
+                    vim.api.nvim_buf_get_lines(source_buf, 0, -1, false)
+                )
+                assert.is_true(vim.bo[source_buf].modified)
+                assert.are.equal("saved text\n", destination:read())
+                vim.cmd "write"
+                assert.are.equal(
+                    "saved text\nunsaved edit\n",
+                    destination:read()
+                )
+                assert.is_false(source:exists())
+            end
+        )
+    end
+
+    it("keeps the original unmodified buffer", function()
+        state.vault:rename_current_note()
+
+        assert_renamed_buffer()
+        assert.same(
+            { "saved text" },
+            vim.api.nvim_buf_get_lines(source_buf, 0, -1, false)
+        )
+        assert.is_false(vim.bo[source_buf].modified)
+    end)
+
+    it("keeps saved self links unmodified after rename", function()
+        source:write "[[test]]\n"
+        vim.cmd "edit!"
+
+        state.vault:rename_current_note()
+
+        assert_renamed_buffer()
+        assert.same(
+            { "[[new test]]" },
+            vim.api.nvim_buf_get_lines(source_buf, 0, -1, false)
+        )
+        assert.are.equal("[[new test]]\n", destination:read())
+        assert.is_false(vim.bo[source_buf].modified)
+    end)
+
+    it("updates saved and unsaved self links through write", function()
+        source:write "[[test]]\n"
+        vim.cmd "edit!"
+        vim.api.nvim_buf_set_lines(source_buf, 1, -1, false, {
+            "unsaved [[test|alias]] and [[test#header]]",
+        })
+
+        state.vault:rename_current_note()
+
+        assert_renamed_buffer()
+        assert.same({
+            "[[new test]]",
+            "unsaved [[new test|alias]] and [[new test#header]]",
+        }, vim.api.nvim_buf_get_lines(source_buf, 0, -1, false))
+        assert.is_true(vim.bo[source_buf].modified)
+        assert.are.equal("[[new test]]\n", destination:read())
+        vim.cmd "write"
+        assert.are.equal(
+            "[[new test]]\nunsaved [[new test|alias]] and [[new test#header]]\n",
+            destination:read()
+        )
+        assert.is_false(source:exists())
+    end)
+
+    it("allows a destination that partially matches another buffer", function()
+        vim.fn.bufadd(destination:path() .. ".bak")
+
+        state.vault:rename_current_note()
+
+        assert_renamed_buffer()
+    end)
+
+    for _, conflict in ipairs { "file", "buffer", "buffer with brackets" } do
+        it(
+            "rejects a destination " .. conflict .. " before mutation",
+            function()
+                local other_buf
+                if conflict == "file" then
+                    destination:write "destination content"
+                else
+                    if conflict == "buffer with brackets" then
+                        destination = File:new(state.home / "new [test].md")
+                        vim.fn.input = function()
+                            return "new [test]"
+                        end
+                    end
+                    other_buf = vim.fn.bufadd(destination:path())
+                    vim.fn.bufload(other_buf)
+                    vim.api.nvim_buf_set_lines(
+                        other_buf,
+                        0,
+                        -1,
+                        false,
+                        { "other edits" }
+                    )
+                end
+                local backlink = state.create_file "backlink.md"
+                backlink:write "[[test]]"
+                vim.api.nvim_buf_set_lines(
+                    source_buf,
+                    0,
+                    -1,
+                    false,
+                    { "unsaved edit" }
+                )
+
+                state.vault:rename_current_note()
+
+                assert.are.equal(source_buf, vim.api.nvim_get_current_buf())
+                assert.are.equal(
+                    source:path(),
+                    vim.api.nvim_buf_get_name(source_buf)
+                )
+                assert.same(
+                    { "unsaved edit" },
+                    vim.api.nvim_buf_get_lines(source_buf, 0, -1, false)
+                )
+                assert.is_true(vim.bo[source_buf].modified)
+                assert.are.equal("saved text\n", source:read())
+                assert.are.equal("[[test]]", backlink:read())
+                assert.are.equal(1, #notifications)
+                if other_buf then
+                    assert.is_false(destination:exists())
+                    assert.same(
+                        { "other edits" },
+                        vim.api.nvim_buf_get_lines(other_buf, 0, -1, false)
+                    )
+                    assert.is_true(vim.bo[other_buf].modified)
+                else
+                    assert.are.equal("destination content", destination:read())
+                end
+            end
+        )
+    end
+end)
+
 describe("rename", function()
     local state = vault_fixture()
 
