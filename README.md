@@ -126,6 +126,7 @@ The most useful options are:
 | `journal.date_glob` | `????-??-??` | Glob used to list daily journal notes. |
 | `journal.week_glob` | `????-W??` | Glob used to list weekly journal notes. |
 | `completion.enabled` | `true` on Neovim 0.12+ | Enables built-in wiki link completion for Markdown notes inside the vault. |
+| `completion.fuzzy` | `false` | Uses fuzzy matching and relevance ordering for note suggestions only. |
 
 Regular notes created with `:ObsNvimNewNote` use
 `templater.note_template_name`. Daily notes use `journal.daily_template_name`.
@@ -145,6 +146,12 @@ link without that boundary, the closing `]]` is added as before.
 - set `vim.opt.autocomplete = true` in your config for Neovim's built-in
   automatic popup
 - set `completion = { enabled = false }` in `obs.setup()` to disable it
+
+Set `completion = { fuzzy = true }` in `obs.setup()` to match nonconsecutive
+characters in note names (for example, `[[apl` matches `apple`). This uses
+Neovim's built-in fuzzy scoring; an empty query lists notes alphabetically.
+By default, matching is case-insensitive by prefix. Fuzzy note completion
+does not change `completeopt` or the matching behavior of other sources.
 
 Templates are Markdown files in `templater.home`. The default template variables
 are:

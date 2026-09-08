@@ -145,6 +145,59 @@ describe("completion items", function()
         vim.api.nvim_win_set_cursor(0, { 1, cursor_col })
     end
 
+    it(
+        "enables fuzzy matching only when requested and resets on setup",
+        function()
+            state.create_file "apple.md"
+            state.create_file "banana.md"
+            for _, opts in ipairs {
+                { fuzzy = true },
+                {},
+                { fuzzy = false },
+                { fuzzy = true, enabled = false },
+            } do
+                Completion.setup(state.vault, opts)
+                set_line_and_cursor("[[apl", #"[[apl")
+                local words = Completion.completefunc(0, "apl").words
+                local expected = completion_supported
+                    and opts.fuzzy == true
+                    and opts.enabled ~= false
+                assert.list_size(words, expected and 1 or 0)
+                if expected then
+                    assert.are.equal("apple]]", words[1].word)
+                end
+            end
+        end
+    )
+
+    it(
+        "ranks fuzzy names and handles empty, mixed case and Cyrillic queries",
+        function()
+            for _, name in ipairs { "axbyc", "abc", "Apple", "новинка" } do
+                state.create_file(name .. ".md")
+            end
+            Completion.setup(state.vault, { fuzzy = true })
+            for _, case in ipairs {
+                { "abc", { "abc", "axbyc" } },
+                { "apl", { "Apple" } },
+                { "нвк", { "новинка" } },
+                { "zzz", {} },
+                {
+                    "",
+                    { "Apple", "abc", "axbyc", "current", "новинка" },
+                },
+            } do
+                set_line_and_cursor("[[" .. case[1] .. "]]", 2 + #case[1])
+                local words = Completion.completefunc(0, case[1]).words
+                local names = {}
+                for _, word in ipairs(words) do
+                    names[#names + 1] = word.abbr
+                end
+                assert.are.same(completion_supported and case[2] or {}, names)
+            end
+        end
+    )
+
     it("finds start after opening brackets", function()
         Completion.setup(state.vault)
         set_line_and_cursor("[[ap", #"[[ap")
@@ -342,6 +395,46 @@ describe("completion acceptance", function()
             false
         )
     end
+
+    for _, trigger in ipairs { "<C-x><C-u>", "<C-n>" } do
+        for _, suffix in ipairs { "", "]]", "|alias]]", "#heading]]" } do
+            it("accepts fuzzy matches with " .. trigger .. suffix, function()
+                if not completion_supported then
+                    return
+                end
+                local line = "[[nw" .. suffix
+                prepare(line, #"[[nw")
+                local complete = vim.bo.complete
+                local completeopt = vim.o.completeopt
+                Completion.setup(state.vault, { fuzzy = true })
+                assert.are.equal(complete, vim.bo.complete)
+                assert.are.equal(completeopt, vim.o.completeopt)
+                assert.is_false(vim.o.autocomplete)
+                local insert = suffix == "" and "a" or "i"
+                feed(insert .. trigger .. "<C-n><C-y><Esc>")
+                assert.are.equal(
+                    "[[new" .. (suffix == "" and "]]" or suffix),
+                    vim.api.nvim_get_current_line()
+                )
+                vim.cmd "undo"
+                assert.are.equal(line, vim.api.nvim_get_current_line())
+            end)
+        end
+    end
+
+    it(
+        "refreshes fuzzy matches while typing and replaces the name tail",
+        function()
+            if not completion_supported then
+                return
+            end
+            prepare("[[nold|alias]]", #"[[n")
+            state.create_file "next.md"
+            Completion.setup(state.vault, { fuzzy = true })
+            feed "i<C-x><C-u>w<C-n><C-y><Esc>"
+            assert.are.equal("[[new|alias]]", vim.api.nvim_get_current_line())
+        end
+    )
 
     local cases = {
         { "same name", "[[new]]", #"[[n", "[[new]]" },

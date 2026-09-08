@@ -99,6 +99,12 @@ to the right of the cursor, while preserving the closing ]] and any |alias or
 #heading. For an incomplete link without that boundary, the closing ]] is
 added as before.
 
+Set completion = { fuzzy = true } in obs.setup() to enable fuzzy matching
+for note suggestions only (for example, [[apl matches apple). Matches use
+Neovim's built-in fuzzy scoring; an empty query lists notes alphabetically.
+The default is false, using case-insensitive prefix matching. This option
+does not change 'completeopt' or the matching behavior of other sources.
+
 ===============================================================================
 HEALTH                                                             *obs-health*
 

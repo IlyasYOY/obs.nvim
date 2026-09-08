@@ -15,6 +15,7 @@ M.complete_source = "F" .. M.completefunc_option
 
 ---@class obs.CompletionOpts
 ---@field public enabled boolean?
+---@field public fuzzy boolean? Use fuzzy note matching; defaults to false.
 
 ---@class obs.CompletionContext
 ---@field public start_col number
@@ -33,6 +34,7 @@ M.complete_source = "F" .. M.completefunc_option
 ---@type obs.Vault?
 M._vault = nil
 M._enabled = false
+M._fuzzy = false
 
 ---@param str string
 ---@param needle string
@@ -152,7 +154,7 @@ local function complete_notes(base, append_closing_brackets)
     local items = {}
     for _, note in ipairs(M._vault:list_notes()) do
         local name = note:name()
-        if name and core.string_has_prefix(name, base, true) then
+        if name and (M._fuzzy or core.string_has_prefix(name, base, true)) then
             local word = name
             if append_closing_brackets then
                 word = word .. "]]"
@@ -163,6 +165,7 @@ local function complete_notes(base, append_closing_brackets)
                 abbr = name,
                 kind = "f",
                 menu = "[obs]",
+                equal = M._fuzzy and 1 or nil,
             }
         end
     end
@@ -170,6 +173,10 @@ local function complete_notes(base, append_closing_brackets)
     table.sort(items, function(left, right)
         return left.abbr < right.abbr
     end)
+
+    if M._fuzzy and base ~= "" then
+        return vim.fn.matchfuzzy(items, base, { key = "abbr" })
+    end
 
     return items
 end
@@ -318,6 +325,7 @@ end
 
 function M.disable()
     M._enabled = false
+    M._fuzzy = false
     M._vault = nil
     pcall(vim.api.nvim_del_augroup_by_name, augroup_name)
 end
@@ -334,6 +342,7 @@ function M.setup(vault, opts)
 
     M._vault = vault
     M._enabled = opts.enabled ~= false
+    M._fuzzy = opts.fuzzy == true
 
     if not M._enabled then
         return
